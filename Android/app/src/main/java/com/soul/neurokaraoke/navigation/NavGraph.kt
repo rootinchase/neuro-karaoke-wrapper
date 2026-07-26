@@ -273,7 +273,8 @@ fun NavGraph(
                     onRemoveFromPlaylist = { song ->
                         val token = if (isLoggedIn) authUser?.apiToken ?: authUser?.accessToken else null
                         userPlaylistRepository.removeSongFromPlaylist(playlistId, song.id, token)
-                    }
+                    },
+                    accessToken = accessToken
                 )
             }
         }
@@ -378,6 +379,13 @@ fun NavGraph(
             MoreScreen(
                 onSoundbitesClick = {
                     navController.navigate(Screen.Soundbites.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onPublicPlaylistsClick = {
+                    navController.navigate(Screen.Explore.route) {
                         popUpTo(Screen.More.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true

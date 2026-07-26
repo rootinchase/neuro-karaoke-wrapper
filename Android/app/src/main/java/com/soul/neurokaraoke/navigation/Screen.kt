@@ -27,7 +27,7 @@ sealed class Screen(
     // Main navigation screens
     data object Home : Screen("home", "Home", Icons.Default.Home)
     data object Search : Screen("search", "Search", Icons.Default.Search)
-    data object Explore : Screen("explore", "Browse", Icons.Default.Explore)
+    data object Explore : Screen("explore", "Public Playlists", Icons.Default.Explore)
     data object Artists : Screen("artists", "Artists", Icons.Default.Person)
     data object Setlists : Screen("setlists", "Karaoke Setlist", Icons.AutoMirrored.Filled.QueueMusic)
     data object Radio : Screen("radio", "Radio", Icons.Default.Radio)
@@ -78,6 +78,6 @@ sealed class Screen(
         val libraryItems by lazy { listOf(Favorites, Playlists, Downloads) }
 
         // More screen items
-        val moreItems by lazy { listOf(Radio, Soundbites, Setlists, Artists, About) }
+        val moreItems by lazy { listOf(Explore, Soundbites, Setlists, Artists, About) }
     }
 }

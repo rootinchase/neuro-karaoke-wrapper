@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Groups
@@ -56,6 +57,7 @@ data class MoreMenuItem(
 @Composable
 fun MoreScreen(
     onSoundbitesClick: () -> Unit,
+    onPublicPlaylistsClick: () -> Unit,
     onSetlistsClick: () -> Unit,
     onArtistsClick: () -> Unit,
     onRecentlyPlayedClick: () -> Unit,
@@ -69,6 +71,7 @@ fun MoreScreen(
         MoreMenuItem(stringResource(R.string.more_item_recently_played), Icons.Default.History, onRecentlyPlayedClick),
         MoreMenuItem(stringResource(R.string.more_item_random_songs), Icons.Default.Casino, onRandomSongsClick),
         MoreMenuItem(stringResource(R.string.more_item_soundbites), Icons.Default.GraphicEq, onSoundbitesClick),
+        MoreMenuItem(stringResource(R.string.more_item_public_playlists), Icons.Default.Explore, onPublicPlaylistsClick),
         MoreMenuItem(stringResource(R.string.more_item_setlists), Icons.AutoMirrored.Filled.QueueMusic, onSetlistsClick),
         MoreMenuItem(stringResource(R.string.more_item_artists), Icons.Default.Groups, onArtistsClick),
         MoreMenuItem(stringResource(R.string.more_item_local_music), Icons.Default.FileUpload, onUploadSongsClick),
@@ -102,7 +105,7 @@ fun MoreScreen(
         // Menu items
         items.forEachIndexed { index, item ->
             // Divider before utility section (Local Music)
-            if (index == 5) {
+            if (index == 6) {
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                     thickness = 0.5.dp,
