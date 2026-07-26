@@ -65,6 +65,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -135,6 +137,7 @@ fun PlayerScreen(
     onAddToPlaylist: () -> Unit = {},
     isRadioMode: Boolean = false,
     radioListenerCount: Int = 0,
+    accessToken: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -575,20 +578,26 @@ fun PlayerScreen(
         } // end !isRadioMode controls
     }
 
-    // Lyrics bottom sheet
+    // Immersive Apple-style lyrics (hosted in a near-full-height bottom sheet,
+    // which handles system-bar insets correctly — a Dialog window clipped the
+    // bottom transport row).
     if (showLyrics) {
         ModalBottomSheet(
             onDismissRequest = { showLyrics = false },
             sheetState = lyricsSheetState,
-            containerColor = MaterialTheme.colorScheme.surface
+            dragHandle = null,
+            containerColor = MaterialTheme.colorScheme.background
         ) {
-            LyricsContent(
-                songTitle = song.title,
-                artistName = song.artist,
-                songAudioUrl = song.audioUrl,
+            ImmersiveLyricsView(
+                song = song,
+                isPlaying = isPlaying,
                 currentPosition = currentPosition,
                 duration = duration,
                 onSeekTo = onSeekTo,
+                onPlayPause = onPlayPauseClick,
+                onPrevious = onPreviousClick,
+                onNext = onNextClick,
+                accessToken = accessToken,
                 onClose = { showLyrics = false }
             )
         }

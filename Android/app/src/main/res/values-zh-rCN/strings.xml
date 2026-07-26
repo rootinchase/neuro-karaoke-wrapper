@@ -82,6 +82,7 @@
     <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
     <string name="lyrics_credit_neurokaraoke">歌词由 Neuro卡拉OK 提供</string>
     <string name="lyrics_credit_lrclib">歌词由 LRCLIB 提供</string>
+    <string name="lyrics_translate">翻译歌词</string>
 
     <!-- Queue -->
     <string name="queue_sheet_title">播放队列</string>
@@ -158,6 +159,7 @@
     <string name="favorites_empty_subtitle">对任意歌曲使用红心按钮来添加收藏。</string>
     <string name="favorites_button_play">播放</string>
     <string name="favorites_button_shuffle">随机播放</string>
+    <string name="favorites_refresh">刷新收藏</string>
 
     <!-- Playlists screen -->
     <string name="playlists_header_title">我的播放列表</string>
@@ -208,10 +210,18 @@
     <string name="more_item_soundbites">音频片段</string>
     <string name="more_item_setlists">歌单</string>
     <string name="more_item_artists">艺术家</string>
+    <string name="more_item_recently_played">最近播放</string>
+    <string name="more_item_random_songs">随机歌曲</string>
     <string name="more_item_local_music">本地音乐</string>
     <string name="more_item_settings">设置</string>
     <string name="more_item_about">关于应用</string>
     <string name="more_section_theme">主题</string>
+    <string name="recently_played_empty_title">暂无播放记录</string>
+    <string name="recently_played_empty_subtitle">你播放的歌曲会显示在这里</string>
+    <string name="recently_played_clear">清除</string>
+    <string name="random_songs_empty_title">暂无歌曲</string>
+    <string name="random_songs_play">播放</string>
+    <string name="random_songs_reshuffle">重新随机</string>
 
     <!-- Theme options -->
     <string name="theme_option_auto">自动</string>

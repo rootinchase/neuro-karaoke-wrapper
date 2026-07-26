@@ -1,6 +1,8 @@
 ﻿package com.soul.neurokaraoke.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +22,9 @@ import com.soul.neurokaraoke.ui.screens.library.FavoritesScreen
 import com.soul.neurokaraoke.ui.screens.library.LibraryScreen
 import com.soul.neurokaraoke.ui.screens.library.PlaylistsScreen
 import com.soul.neurokaraoke.ui.screens.library.UserPlaylistDetailScreen
+import com.soul.neurokaraoke.ui.screens.library.RecentlyPlayedScreen
+import com.soul.neurokaraoke.ui.screens.library.RandomSongsScreen
+import com.soul.neurokaraoke.data.repository.RecentlyPlayedStore
 import com.soul.neurokaraoke.ui.screens.more.MoreScreen
 import com.soul.neurokaraoke.ui.screens.more.SettingsScreen
 import com.soul.neurokaraoke.ui.screens.more.UploadSongsScreen
@@ -219,6 +224,9 @@ fun NavGraph(
         }
 
         composable(Screen.Favorites.route) {
+            // Re-pull favorites from the server each time the screen opens so
+            // changes made on other devices show up (issue #25).
+            androidx.compose.runtime.LaunchedEffect(Unit) { onRefreshFavorites() }
             FavoritesScreen(
                 favoriteSongs = favoriteSongs,
                 onSongClick = { song, queue -> onPlaySongWithQueue(song, queue) },
@@ -268,6 +276,23 @@ fun NavGraph(
                     }
                 )
             }
+        }
+
+        composable(Screen.RecentlyPlayed.route) {
+            val recentSongs by RecentlyPlayedStore.songs.collectAsState()
+            RecentlyPlayedScreen(
+                songs = recentSongs,
+                onSongClick = onPlaySongWithQueue,
+                onClear = { RecentlyPlayedStore.clear() }
+            )
+        }
+
+        composable(Screen.RandomSongs.route) {
+            androidx.compose.runtime.LaunchedEffect(Unit) { onLoadAllSongs() }
+            RandomSongsScreen(
+                allSongs = allSongs.ifEmpty { songs },
+                onSongClick = onPlaySongWithQueue
+            )
         }
 
         composable(Screen.Downloads.route) {
@@ -367,6 +392,20 @@ fun NavGraph(
                 },
                 onArtistsClick = {
                     navController.navigate(Screen.Artists.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onRecentlyPlayedClick = {
+                    navController.navigate(Screen.RecentlyPlayed.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onRandomSongsClick = {
+                    navController.navigate(Screen.RandomSongs.route) {
                         popUpTo(Screen.More.route) { saveState = true }
                         launchSingleTop = true
                         restoreState = true

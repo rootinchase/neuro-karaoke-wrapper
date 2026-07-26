@@ -18,9 +18,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.HorizontalDivider
@@ -56,12 +58,16 @@ fun MoreScreen(
     onSoundbitesClick: () -> Unit,
     onSetlistsClick: () -> Unit,
     onArtistsClick: () -> Unit,
+    onRecentlyPlayedClick: () -> Unit,
+    onRandomSongsClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onUploadSongsClick: () -> Unit,
     onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
+        MoreMenuItem(stringResource(R.string.more_item_recently_played), Icons.Default.History, onRecentlyPlayedClick),
+        MoreMenuItem(stringResource(R.string.more_item_random_songs), Icons.Default.Casino, onRandomSongsClick),
         MoreMenuItem(stringResource(R.string.more_item_soundbites), Icons.Default.GraphicEq, onSoundbitesClick),
         MoreMenuItem(stringResource(R.string.more_item_setlists), Icons.AutoMirrored.Filled.QueueMusic, onSetlistsClick),
         MoreMenuItem(stringResource(R.string.more_item_artists), Icons.Default.Groups, onArtistsClick),
@@ -96,7 +102,7 @@ fun MoreScreen(
         // Menu items
         items.forEachIndexed { index, item ->
             // Divider before utility section (Local Music)
-            if (index == 3) {
+            if (index == 5) {
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
                     thickness = 0.5.dp,

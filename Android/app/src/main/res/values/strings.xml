@@ -82,6 +82,7 @@
     <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
     <string name="lyrics_credit_neurokaraoke">Lyrics provided by NeuroKaraoke</string>
     <string name="lyrics_credit_lrclib">Lyrics provided by LRCLIB</string>
+    <string name="lyrics_translate">Translate lyrics</string>
 
     <!-- Queue -->
     <string name="queue_sheet_title">Queue</string>
@@ -158,6 +159,7 @@
     <string name="favorites_empty_subtitle">Use the heart action on any song to build your favorites.</string>
     <string name="favorites_button_play">Play</string>
     <string name="favorites_button_shuffle">Shuffle</string>
+    <string name="favorites_refresh">Refresh favorites</string>
 
     <!-- Playlists screen -->
     <string name="playlists_header_title">Your Playlists</string>
@@ -208,10 +210,18 @@
     <string name="more_item_soundbites">Soundbites</string>
     <string name="more_item_setlists">Setlists</string>
     <string name="more_item_artists">Artists</string>
+    <string name="more_item_recently_played">Recently Played</string>
+    <string name="more_item_random_songs">Random Songs</string>
     <string name="more_item_local_music">Local Music</string>
     <string name="more_item_settings">Settings</string>
     <string name="more_item_about">About App</string>
     <string name="more_section_theme">Theme</string>
+    <string name="recently_played_empty_title">Nothing played yet</string>
+    <string name="recently_played_empty_subtitle">Songs you play will show up here</string>
+    <string name="recently_played_clear">Clear</string>
+    <string name="random_songs_empty_title">No songs available</string>
+    <string name="random_songs_play">Play</string>
+    <string name="random_songs_reshuffle">Reshuffle</string>
 
     <!-- Theme options -->
     <string name="theme_option_auto">Auto</string>

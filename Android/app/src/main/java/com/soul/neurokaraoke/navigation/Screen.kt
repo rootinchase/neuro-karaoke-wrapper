@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Casino
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,6 +44,8 @@ sealed class Screen(
     data object Downloads : Screen("downloads", "Downloads", Icons.Default.Download)
     data object Favorites : Screen("favorites", "Favorites", Icons.Default.Favorite)
     data object Playlists : Screen("playlists", "Your Playlists", Icons.Default.LibraryMusic)
+    data object RecentlyPlayed : Screen("recently_played", "Recently Played", Icons.Default.History)
+    data object RandomSongs : Screen("random_songs", "Random Songs", Icons.Default.Casino)
 
     // Detail screens
     data object PlaylistDetail : Screen("playlist/{playlistId}", "Playlist") {

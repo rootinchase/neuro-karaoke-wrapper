@@ -19,13 +19,28 @@ data class LyricsResult(
 
 data class LyricLine(
     val timestamp: Long, // in milliseconds
-    val text: String
+    val text: String,
+    val translatedText: String? = null
 )
 
 class LyricsApi {
     companion object {
         private const val BASE_URL = "https://lrclib.net/api"
         private const val USER_AGENT = "NeuroKaraoke Android App (https://github.com/user/neurokaraoke)"
+        const val NK_API_URL = "https://api.neurokaraoke.com"
+
+        /**
+         * Pure zip of lyric lines with their translations. Only applies when the
+         * counts match (the server contract); otherwise returns lines unchanged.
+         * Android-free so it can be unit tested on the JVM.
+         */
+        fun mergeTranslations(lines: List<LyricLine>, translations: List<String>): List<LyricLine> {
+            if (translations.size != lines.size) return lines
+            return lines.mapIndexed { i, line ->
+                val t = translations[i]
+                if (t.isBlank() || t == line.text) line else line.copy(translatedText = t)
+            }
+        }
     }
 
     /**
@@ -147,5 +162,74 @@ class LyricsApi {
                 // Assign fake timestamps for display (won't be used for syncing)
                 LyricLine(index * 3000L, text.trim())
             }
+    }
+
+    /**
+     * Translate synced lyrics via the NeuroKaraoke first-party endpoint.
+     *   POST /api/lyrics/translate  (Bearer)
+     *   body: {"songID": id, "lyrics":[{"time": <seconds>, "text": "..."}]}
+     * Response accepted in any of these shapes (mirrors the iOS client):
+     *   {"translations":["..."]} | {"lines":[{"text":"..."}]} | {"items":[{"text":"..."}]}
+     * Returns the input lines with [LyricLine.translatedText] filled in.
+     */
+    suspend fun translateLyrics(
+        songId: String,
+        lines: List<LyricLine>,
+        accessToken: String
+    ): Result<List<LyricLine>> = withContext(Dispatchers.IO) {
+        if (lines.isEmpty()) return@withContext Result.success(lines)
+        var conn: HttpURLConnection? = null
+        try {
+            val body = JSONObject().apply {
+                put("songID", songId)
+                put("lyrics", JSONArray().apply {
+                    lines.forEach { line ->
+                        put(JSONObject().apply {
+                            put("time", line.timestamp / 1000.0) // ms -> seconds (TimeInterval)
+                            put("text", line.text)
+                        })
+                    }
+                })
+            }
+            conn = (URL("$NK_API_URL/api/lyrics/translate").openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                setRequestProperty("Authorization", "Bearer $accessToken")
+                setRequestProperty("Content-Type", "application/json")
+                connectTimeout = 15000
+                readTimeout = 15000
+                doOutput = true
+            }
+            conn.outputStream.use { it.write(body.toString().toByteArray()) }
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                if (com.soul.neurokaraoke.BuildConfig.DEBUG) {
+                    android.util.Log.e("LyricsApi", "translate failed ($code)")
+                }
+                return@withContext Result.failure(Exception("HTTP $code"))
+            }
+            val response = conn.inputStream.bufferedReader().use { it.readText() }
+            val translations = parseTranslations(response)
+            Result.success(mergeTranslations(lines, translations))
+        } catch (e: Exception) {
+            if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
+            Result.failure(e)
+        } finally {
+            conn?.disconnect()
+        }
+    }
+
+    /** Extract the translated strings from any of the accepted response shapes. */
+    private fun parseTranslations(response: String): List<String> {
+        val json = JSONObject(response)
+        json.optJSONArray("translations")?.let { arr ->
+            return (0 until arr.length()).map { arr.getString(it) }
+        }
+        json.optJSONArray("lines")?.let { arr ->
+            return (0 until arr.length()).map { arr.getJSONObject(it).optString("text", "") }
+        }
+        json.optJSONArray("items")?.let { arr ->
+            return (0 until arr.length()).map { arr.getJSONObject(it).optString("text", "") }
+        }
+        return emptyList()
     }
 }

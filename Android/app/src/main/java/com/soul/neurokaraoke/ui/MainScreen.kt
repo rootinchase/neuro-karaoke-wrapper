@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -78,6 +79,24 @@ fun MainScreen(
             favoritesRepository.syncFromServer(token)
             userPlaylistRepository.syncFromServer(token)
         }
+    }
+
+    // Re-sync on app resume so changes made on other devices show up (issue #25).
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                val token = authViewModel.getAccessToken()
+                if (authState.isLoggedIn && token != null) {
+                    scope.launch {
+                        favoritesRepository.syncFromServer(token)
+                        userPlaylistRepository.syncFromServer(token)
+                    }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     // Load first available playlist on first launch
@@ -253,7 +272,8 @@ fun MainScreen(
                 onToggleFavorite = { favoritesRepository.toggleFavorite(currentSong, authViewModel.getAccessToken()) },
                 onAddToPlaylist = { songToAddToPlaylist = currentSong },
                 isRadioMode = playerState.isRadioMode,
-                radioListenerCount = playerState.radioListenerCount
+                radioListenerCount = playerState.radioListenerCount,
+                accessToken = authViewModel.getAccessToken()
             )
         }
     }

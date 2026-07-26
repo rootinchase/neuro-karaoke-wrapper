@@ -21,6 +21,7 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.AuthRepository
+import com.soul.neurokaraoke.data.repository.RecentlyPlayedStore
 import com.soul.neurokaraoke.data.repository.SettingsRepository
 import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.service.MediaPlaybackService
@@ -111,6 +112,7 @@ class PlayerViewModel(
     init {
         // Ensure settings are initialized
         SettingsRepository.initialize(application)
+        RecentlyPlayedStore.initialize(application)
         // Restore last played song immediately (before anything else)
         // so the mini player shows the correct song instantly
         restorePlaybackState()
@@ -671,6 +673,9 @@ class PlayerViewModel(
             )
             return
         }
+
+        // Track recently played (ported from Twinskaraoke iOS)
+        RecentlyPlayedStore.record(song)
 
         val resumePos = if (startPosition > 0) startPosition else 0L
         _uiState.value = _uiState.value.copy(
