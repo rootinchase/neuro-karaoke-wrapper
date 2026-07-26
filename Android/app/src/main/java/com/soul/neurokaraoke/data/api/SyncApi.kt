@@ -260,10 +260,13 @@ class SyncApi {
      */
     suspend fun removeSongFromPlaylist(accessToken: String, playlistId: String, songId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // NOTE: must be /api/user/playlists/{id}?songId= (mirrors addSongToPlaylist's PUT).
-            // DELETE /api/playlist/{id} is the delete-whole-playlist endpoint — the server
-            // ignores the songId query param there and nukes the playlist.
-            val conn = URL("$API_URL/api/user/playlists/$playlistId?songId=$songId").openConnection() as HttpURLConnection
+            // Remove-song endpoint (confirmed via the server's Allow header):
+            //   DELETE /api/playlist/{id}/song/{songId}
+            // Note the asymmetry with add (PUT /api/user/playlists/{id}?songId=):
+            //   - /api/user/playlists/{id}      allows PUT only  (add)
+            //   - /api/playlist/{id}            allows DELETE,GET (delete WHOLE playlist)
+            //   - /api/playlist/{id}/song/{sid} allows DELETE     (remove one song)
+            val conn = URL("$API_URL/api/playlist/$playlistId/song/$songId").openConnection() as HttpURLConnection
             conn.requestMethod = "DELETE"
             conn.setRequestProperty("Authorization", "Bearer $accessToken")
             conn.connectTimeout = 10000
