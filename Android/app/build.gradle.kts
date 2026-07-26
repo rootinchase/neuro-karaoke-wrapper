@@ -12,11 +12,14 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
+    // Code/R/BuildConfig package. Kept as-is so no source files move.
     namespace = "com.soul.neurokaraoke"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.soul.neurokaraoke"
+        // Play Store application id (registered on the Play Console dashboard).
+        // Differs from `namespace` on purpose — AGP handles the distinction.
+        applicationId = "com.neurokaraoke"
         minSdk = 24
         targetSdk = 35
         versionCode = 9
