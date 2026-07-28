@@ -17,7 +17,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-docs/
+docs/*
+!docs/privacy-policy.md
 
 # Logs
 *.log
