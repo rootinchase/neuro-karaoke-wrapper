@@ -10,6 +10,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Required for the Car App Library media template (category.MEDIA) -->
+    <uses-permission android:name="androidx.car.app.MEDIA_TEMPLATES" />
 
     <uses-feature
         android:name="android.hardware.type.automotive"
@@ -30,15 +32,19 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NeuroKaraoke">
 
-        <!-- Android Auto: declares this app provides media browsing -->
-        <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc" />
-
-        <!-- Car App Library minimum API level -->
+        <!-- Car App Library minimum API level. Level 8 is required for the
+             category.MEDIA template host. -->
         <meta-data
             android:name="androidx.car.app.minCarApiLevel"
-            android:value="1" />
+            android:value="8" />
+
+        <!-- app-projected injects com.google.android.gms.car.application, which
+             Play rejects alongside the AAOS automotive feature. Strip the
+             library-injected declaration; the Car App Library CarAppService
+             provides the car UI on both projected Android Auto and AAOS. -->
+        <meta-data
+            android:name="com.google.android.gms.car.application"
+            tools:node="remove" />
 
         <!-- Custom Android Auto UI via Car App Library -->
         <service

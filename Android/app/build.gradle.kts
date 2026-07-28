@@ -128,8 +128,8 @@ dependencies {
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")
 
     // Android for Cars App Library — custom AA browse UI (tabs, grids, lists)
-    implementation("androidx.car.app:app:1.4.0")
-    implementation("androidx.car.app:app-projected:1.4.0")
+    implementation("androidx.car.app:app:1.7.0")
+    implementation("androidx.car.app:app-projected:1.7.0")
 
     // Testing
     testImplementation(libs.junit)
