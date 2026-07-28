@@ -1,3 +1,7 @@
+---
+title: Privacy Policy — Neuro Karaoke
+---
+
 # Privacy Policy — Neuro Karaoke
 
 **Effective date:** 28 July 2026
