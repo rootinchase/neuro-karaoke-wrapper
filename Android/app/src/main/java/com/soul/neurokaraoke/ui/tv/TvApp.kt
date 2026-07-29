@@ -16,13 +16,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Playlist
+import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 
 @Composable
-fun TvApp(playerViewModel: PlayerViewModel) {
+fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     var tab by remember { mutableStateOf(TvTab.HOME) }
     // Holds the playlist the user drilled into from a rail's cover card.
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    val accessToken = authViewModel.getAccessToken()
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
@@ -37,6 +39,10 @@ fun TvApp(playerViewModel: PlayerViewModel) {
                     TvTab.LIBRARY -> TvLibraryScreen(
                         onOpenDetail = { playlist -> selectedPlaylist = playlist },
                         playerViewModel = playerViewModel
+                    )
+                    TvTab.NOW_PLAYING -> TvNowPlayingScreen(
+                        playerViewModel = playerViewModel,
+                        accessToken = accessToken
                     )
                     else -> Text(tab.label, style = MaterialTheme.typography.headlineMedium)
                 }

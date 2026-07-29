@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     } else if (isTelevision()) {
-                        com.soul.neurokaraoke.ui.tv.TvApp(playerViewModel = playerViewModel)
+                        com.soul.neurokaraoke.ui.tv.TvApp(playerViewModel = playerViewModel, authViewModel = authViewModel)
                     } else {
                         MainScreen(
                             playerViewModel = playerViewModel,
