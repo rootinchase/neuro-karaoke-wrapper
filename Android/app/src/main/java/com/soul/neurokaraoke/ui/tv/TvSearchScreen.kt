@@ -2,6 +2,7 @@ package com.soul.neurokaraoke.ui.tv
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,23 +101,40 @@ fun TvSearchScreen(
 
         // Right: live results
         Column(modifier = Modifier.fillMaxHeight().weight(1f)) {
-            Text(
-                text = "${results.size} results",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                itemsIndexed(results, key = { _, song -> song.id }) { index, song ->
-                    TvSearchResultRow(
-                        index = index + 1,
-                        song = song,
-                        onPlay = { onPlay(song, results) }
-                    )
+            if (results.isEmpty() && playerState.isLoadingAllSongs) {
+                // Fresh install / cold start: allSongs hasn't arrived yet (TvApp kicks off
+                // playerViewModel.loadAllSongs() on entry). Show a spinner instead of a
+                // permanently blank pane while that load is in flight.
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Loading songs...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                Text(
+                    text = "${results.size} results",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    itemsIndexed(results, key = { _, song -> song.id }) { index, song ->
+                        TvSearchResultRow(
+                            index = index + 1,
+                            song = song,
+                            onPlay = { onPlay(song, results) }
+                        )
+                    }
                 }
             }
         }

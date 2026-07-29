@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,16 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     // Holds the playlist the user drilled into from a rail's cover card.
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     val accessToken = authViewModel.getAccessToken()
+
+    // TvApp is the TV entry point — unlike the phone, there is no NavGraph
+    // composable(Screen.Search.route) { LaunchedEffect(Unit) { onLoadAllSongs() } }
+    // to trigger this, so Home's "Trending"/"New Releases" rails and the Search
+    // screen would otherwise stay empty forever on a fresh install.
+    // availablePlaylists doesn't need a matching call here: PlayerViewModel.init()
+    // already calls loadAvailablePlaylists() unconditionally on construction.
+    LaunchedEffect(Unit) {
+        playerViewModel.loadAllSongs()
+    }
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {

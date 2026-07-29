@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -77,6 +78,15 @@ fun TvAccountScreen(authViewModel: AuthViewModel) {
 
     LaunchedEffect(accessToken) {
         if (accessToken.isNotEmpty()) profileViewModel.load(accessToken)
+    }
+
+    // Mirrors ProfileScreen.kt's `state.isLoading && profile == null` branch: show a
+    // spinner during the initial load instead of silently rendering the User-only fallback.
+    if (state.isLoading && state.profile == null) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+        return
     }
 
     val profile = state.profile
