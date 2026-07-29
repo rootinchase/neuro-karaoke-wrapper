@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +43,11 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                         playerViewModel = playerViewModel,
                         accessToken = accessToken
                     )
-                    else -> Text(tab.label, style = MaterialTheme.typography.headlineMedium)
+                    TvTab.SEARCH -> TvSearchScreen(
+                        onPlay = { song, results -> playerViewModel.playSongWithQueue(song, results) },
+                        playerViewModel = playerViewModel
+                    )
+                    TvTab.ACCOUNT -> TvAccountScreen(authViewModel = authViewModel)
                 }
             }
         }
