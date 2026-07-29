@@ -1,6 +1,7 @@
 package com.soul.neurokaraoke.ui.tv
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
@@ -37,7 +39,12 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     }
 
     Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .focusProperties { canFocus = selectedPlaylist == null }
+                .focusGroup()
+        ) {
             TvNavBar(selected = tab, onSelect = { tab = it }, modifier = Modifier.padding(24.dp))
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when (tab) {
