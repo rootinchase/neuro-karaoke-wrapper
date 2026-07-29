@@ -238,6 +238,9 @@ fun MainScreen(
             onDismissRequest = { showFullPlayer = false },
             sheetState = playerSheetState,
             dragHandle = null,
+            // Fill the width on large screens so the tablet two-pane player uses
+            // the full display instead of a centered ~640dp sheet.
+            sheetMaxWidth = androidx.compose.ui.unit.Dp.Unspecified,
             containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0.95f)
         ) {
             PlayerScreen(

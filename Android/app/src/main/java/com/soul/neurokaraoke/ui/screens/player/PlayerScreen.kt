@@ -160,6 +160,39 @@ fun PlayerScreen(
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
+    // Wide landscape (tablets, foldables) uses the two-pane now-playing layout.
+    val isWide = isLandscape && configuration.screenWidthDp >= 720
+
+    if (isWide) {
+        TabletNowPlaying(
+            song = song,
+            isPlaying = isPlaying,
+            currentPosition = currentPosition,
+            duration = duration,
+            isShuffleEnabled = isShuffleEnabled,
+            repeatMode = repeatMode,
+            isFavorite = isFavorite,
+            accessToken = accessToken,
+            isDownloaded = isDownloaded,
+            downloadProgress = downloadProgress,
+            sleepTimerActive = sleepTimerActive,
+            isRadioMode = isRadioMode,
+            onSeekTo = onSeekTo,
+            onPlayPause = onPlayPauseClick,
+            onPrevious = onPreviousClick,
+            onNext = onNextClick,
+            onShuffleClick = onShuffleClick,
+            onRepeatClick = onRepeatClick,
+            onToggleFavorite = onToggleFavorite,
+            onCollapse = onCollapseClick,
+            onDownloadClick = onDownloadClick,
+            onAddToPlaylist = onAddToPlaylist,
+            onOpenQueue = { showQueue = true },
+            onOpenEqualizer = { showEqualizer = true },
+            onOpenSleepTimer = { showSleepTimer = true },
+            modifier = modifier
+        )
+    } else {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -613,6 +646,7 @@ fun PlayerScreen(
         }
         } // end !isRadioMode controls
     }
+    } // end else — phone/portrait layout
 
     // Immersive Apple-style lyrics (hosted in a near-full-height bottom sheet,
     // which handles system-bar insets correctly — a Dialog window clipped the
