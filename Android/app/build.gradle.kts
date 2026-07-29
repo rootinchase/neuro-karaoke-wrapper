@@ -22,8 +22,8 @@ android {
         applicationId = "com.neurokaraoke"
         minSdk = 24
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.7.2"
+        versionCode = 11
+        versionName = "1.8.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -102,6 +102,9 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    // Compose for TV (focus-native surfaces for the Android TV 10-foot UI)
+    implementation(libs.androidx.tv.material)
 
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
