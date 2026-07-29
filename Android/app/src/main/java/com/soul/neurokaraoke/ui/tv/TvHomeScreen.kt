@@ -78,6 +78,7 @@ fun TvHomeScreen(
 ) {
     val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
     val recentlyPlayed by RecentlyPlayedStore.songs.collectAsStateWithLifecycle()
+    val songRepository = remember { SongRepository() }
 
     val allSongs = playerState.allSongs
     val newestPlaylist = remember(playerState.availablePlaylists) {
@@ -88,7 +89,7 @@ fun TvHomeScreen(
     LaunchedEffect(newestPlaylist?.id) {
         val playlistId = newestPlaylist?.id
         newReleases = if (playlistId != null) {
-            SongRepository().getPlaylistSongs(playlistId).getOrNull() ?: allSongs.takeLast(20)
+            songRepository.getPlaylistSongs(playlistId).getOrNull() ?: allSongs.takeLast(20)
         } else {
             allSongs.takeLast(20)
         }
@@ -99,7 +100,14 @@ fun TvHomeScreen(
     LazyColumn(Modifier.fillMaxSize()) {
         if (recentlyPlayed.isNotEmpty()) {
             item {
-                TvRail(title = "Recently Played", songs = recentlyPlayed, onPlay = onPlay)
+                // Scope playback to the Recently Played list itself (matches the phone's
+                // ui/screens/library/RecentlyPlayedScreen.kt, which uses playSongWithQueue
+                // so "up next" stays within recents instead of falling back to allSongs).
+                TvRail(
+                    title = "Recently Played",
+                    songs = recentlyPlayed,
+                    onPlay = { song -> playerViewModel.playSongWithQueue(song, recentlyPlayed) }
+                )
             }
         }
         item {
