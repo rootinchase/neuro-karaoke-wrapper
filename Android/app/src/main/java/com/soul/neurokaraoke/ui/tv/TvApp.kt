@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Playlist
@@ -27,6 +28,20 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     // Holds the playlist the user drilled into from a rail's cover card.
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     val accessToken = authViewModel.getAccessToken()
+
+    // Hoisted so TvApp can re-request nav focus after the detail overlay closes (TvNavBar
+    // still does its own one-shot initial-focus request on first composition).
+    val navFocusRequester = remember { FocusRequester() }
+
+    // The detail overlay (TvDetailScreen) owns its own initial focus on its Play button when it
+    // opens (selectedPlaylist becomes non-null), so this effect intentionally does nothing then —
+    // it only fires on the transition back to null, i.e. when the overlay's BackHandler closes it
+    // and nothing else in the tree still holds D-pad focus.
+    LaunchedEffect(selectedPlaylist) {
+        if (selectedPlaylist == null) {
+            runCatching { navFocusRequester.requestFocus() }
+        }
+    }
 
     // TvApp is the TV entry point — unlike the phone, there is no NavGraph
     // composable(Screen.Search.route) { LaunchedEffect(Unit) { onLoadAllSongs() } }
@@ -45,7 +60,12 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                 .focusProperties { canFocus = selectedPlaylist == null }
                 .focusGroup()
         ) {
-            TvNavBar(selected = tab, onSelect = { tab = it }, modifier = Modifier.padding(24.dp))
+            TvNavBar(
+                selected = tab,
+                onSelect = { tab = it },
+                modifier = Modifier.padding(24.dp),
+                focusRequester = navFocusRequester
+            )
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when (tab) {
                     TvTab.HOME -> TvHomeScreen(

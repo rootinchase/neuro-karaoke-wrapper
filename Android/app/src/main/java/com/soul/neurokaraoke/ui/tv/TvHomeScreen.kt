@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
@@ -23,6 +25,7 @@ import com.soul.neurokaraoke.data.repository.RecentlyPlayedStore
 import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit) {
     Column(Modifier.padding(vertical = 12.dp)) {
@@ -31,6 +34,7 @@ fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit) {
             modifier = Modifier.padding(start = 48.dp, bottom = 8.dp)
         )
         LazyRow(
+            modifier = Modifier.focusRestorer(),
             contentPadding = PaddingValues(horizontal = 48.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
@@ -70,6 +74,7 @@ fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit) {
  * "new releases" API, so those rails are derived from [PlayerUiState.allSongs]
  * and the newest setlist in [PlayerUiState.availablePlaylists].
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TvHomeScreen(
     onPlay: (Song) -> Unit,
@@ -97,9 +102,16 @@ fun TvHomeScreen(
 
     val trending = remember(allSongs) { allSongs.take(20) }
 
-    LazyColumn(Modifier.fillMaxSize()) {
+    // focusRestorer() + stable per-rail keys keep row identity (and D-pad focus) stable when
+    // the "Recently Played" rail is inserted/removed at the top after a song plays — without
+    // this, the shift in item position drops focus to null and the remote goes dead.
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .focusRestorer()
+    ) {
         if (recentlyPlayed.isNotEmpty()) {
-            item {
+            item(key = "recently") {
                 // Scope playback to the Recently Played list itself (matches the phone's
                 // ui/screens/library/RecentlyPlayedScreen.kt, which uses playSongWithQueue
                 // so "up next" stays within recents instead of falling back to allSongs).
@@ -110,10 +122,10 @@ fun TvHomeScreen(
                 )
             }
         }
-        item {
+        item(key = "trending") {
             TvRail(title = "Trending", songs = trending, onPlay = onPlay)
         }
-        item {
+        item(key = "newreleases") {
             TvRail(title = "New Releases", songs = newReleases, onPlay = onPlay)
         }
     }

@@ -20,14 +20,20 @@ enum class TvTab(val label: String) {
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun TvNavBar(selected: TvTab, onSelect: (TvTab) -> Unit, modifier: Modifier = Modifier) {
+fun TvNavBar(
+    selected: TvTab,
+    onSelect: (TvTab) -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester = remember { FocusRequester() }
+) {
     // Nothing in the tv-material3 TabRow/Tab grabs default D-pad focus on its own, so on a
     // fresh launch the emulator's D-pad has no starting point and every key press is a no-op.
     // Request focus once (keyed on Unit, not on `selected`) so this fires exactly one time per
     // TvNavBar composition and never fights the user by re-grabbing focus on later tab switches.
-    val initialFocusRequester = remember { FocusRequester() }
+    // `focusRequester` is hoistable so callers (TvApp) can re-trigger it later, e.g. to restore
+    // focus after the playlist-detail overlay closes.
     LaunchedEffect(Unit) {
-        runCatching { initialFocusRequester.requestFocus() }
+        runCatching { focusRequester.requestFocus() }
     }
 
     TabRow(selectedTabIndex = selected.ordinal, modifier = modifier) {
@@ -37,7 +43,7 @@ fun TvNavBar(selected: TvTab, onSelect: (TvTab) -> Unit, modifier: Modifier = Mo
                 onFocus = { onSelect(tab) },
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 6.dp)
-                    .let { base -> if (tab == selected) base.focusRequester(initialFocusRequester) else base }
+                    .let { base -> if (tab == selected) base.focusRequester(focusRequester) else base }
             ) {
                 Text(tab.label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
             }
