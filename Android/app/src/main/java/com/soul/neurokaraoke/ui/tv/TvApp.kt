@@ -33,6 +33,10 @@ fun TvApp(playerViewModel: PlayerViewModel) {
                     onOpenDetail = { playlist -> selectedPlaylist = playlist },
                     playerViewModel = playerViewModel
                 )
+                TvTab.LIBRARY -> TvLibraryScreen(
+                    onOpenDetail = { playlist -> selectedPlaylist = playlist },
+                    playerViewModel = playerViewModel
+                )
                 else -> Text(tab.label, style = MaterialTheme.typography.headlineMedium)
             }
         }
