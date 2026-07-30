@@ -1,6 +1,7 @@
 package com.soul.neurokaraoke.ui.tv
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -109,7 +110,12 @@ fun TvDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 6.dp)
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        if (focused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
+                        else androidx.compose.ui.graphics.Color.Transparent
+                    )
                     .onFocusChanged { focused = it.isFocused }
                     .focusable()
                     .onKeyEvent {
@@ -119,7 +125,7 @@ fun TvDetailScreen(
                             onPlaySong(song, songs); true
                         } else false
                     }
-                    .tvFocusScale(focused),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(

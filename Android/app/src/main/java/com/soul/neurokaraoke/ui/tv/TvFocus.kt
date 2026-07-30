@@ -33,5 +33,5 @@ fun Modifier.tvCoverFocus(focused: Boolean, cornerRadius: Dp = 14.dp): Modifier 
     this
         .shadow(elevation = elevation, shape = shape, clip = false)
         .clip(shape)
-        .border(width = ringWidth, color = MaterialTheme.colorScheme.onSurface, shape = shape)
+        .border(width = ringWidth, color = MaterialTheme.colorScheme.primary, shape = shape)
 }

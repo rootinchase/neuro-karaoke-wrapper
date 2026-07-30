@@ -51,7 +51,7 @@ fun TvLibraryScreen(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(5),
-        contentPadding = PaddingValues(horizontal = 48.dp, vertical = 24.dp),
+        contentPadding = PaddingValues(horizontal = 56.dp, vertical = 24.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
         modifier = Modifier.fillMaxSize()

@@ -36,19 +36,19 @@ fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit, subtitle: S
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(start = 48.dp)
+            modifier = Modifier.padding(start = 56.dp)
         )
         if (subtitle.isNotEmpty()) {
             Text(
                 subtitle, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 48.dp)
+                modifier = Modifier.padding(start = 56.dp)
             )
         }
         Spacer(Modifier.height(10.dp))
         LazyRow(
             modifier = Modifier.focusRestorer(),
-            contentPadding = PaddingValues(horizontal = 48.dp),
+            contentPadding = PaddingValues(horizontal = 56.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             items(songs, key = { it.id }) { song ->
