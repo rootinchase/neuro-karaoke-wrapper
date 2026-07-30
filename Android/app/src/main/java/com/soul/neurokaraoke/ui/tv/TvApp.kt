@@ -6,6 +6,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -37,6 +38,21 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     // lyrics fill the screen. Back exits it.
     var fullscreen by remember { mutableStateOf(false) }
     BackHandler(enabled = fullscreen) { fullscreen = false }
+
+    // Settings overlay (corner gear). Gated the same way as the detail overlay.
+    var showSettings by remember { mutableStateOf(false) }
+    val gearFocusRequester = remember { FocusRequester() }
+    // Only re-grab focus onto the gear when the panel actually *closes* (not on first
+    // composition, where a nav tab should hold focus instead).
+    var settingsWasOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(showSettings) {
+        if (showSettings) {
+            settingsWasOpen = true
+        } else if (settingsWasOpen) {
+            settingsWasOpen = false
+            runCatching { gearFocusRequester.requestFocus() }
+        }
+    }
     val accessToken = authViewModel.getAccessToken()
 
     // Hoisted so TvApp can re-request nav focus after the detail overlay closes (TvNavBar
@@ -71,16 +87,22 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
         Column(
             Modifier
                 .fillMaxSize()
-                .focusProperties { canFocus = selectedPlaylist == null }
+                .focusProperties { canFocus = selectedPlaylist == null && !showSettings }
                 .focusGroup()
         ) {
             if (!fullscreen) {
-                TvNavBar(
-                    selected = tab,
-                    onSelect = { tab = it },
-                    modifier = Modifier.padding(24.dp),
-                    focusRequester = navFocusRequester
-                )
+                Box(Modifier.fillMaxWidth().padding(24.dp)) {
+                    TvNavBar(
+                        selected = tab,
+                        onSelect = { tab = it },
+                        focusRequester = navFocusRequester
+                    )
+                    TvSettingsButton(
+                        onClick = { showSettings = true },
+                        focusRequester = gearFocusRequester,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    )
+                }
             }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when (tab) {
@@ -127,6 +149,17 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                     onPlaySong = { song, songs -> playerViewModel.playSongWithQueue(song, songs) },
                     onBack = { selectedPlaylist = null }
                 )
+            }
+        }
+
+        if (showSettings) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                TvImmersiveBackground(playerViewModel)
+                TvSettingsScreen(onClose = { showSettings = false })
             }
         }
     }
