@@ -13,6 +13,11 @@ class Mascot(
     startY: Double,
     private val rng: kotlin.random.Random,
 ) {
+    private companion object {
+        /** Max synchronous push-resolution depth (Sequence/Select nesting), as a cycle-safety net. */
+        const val MAX_RESOLVE_DEPTH = 32
+    }
+
     /** Anchor position (foot point). */
     var x: Double = startX
     var y: Double = startY
@@ -43,6 +48,30 @@ class Mascot(
         var poseTicksLeft: Int = 0
         var durationTicksLeft: Int? = null
         var vel: ShimejiPhysics.Vel = ShimejiPhysics.Vel(0.0, 0.0)
+    }
+
+    init {
+        // Guarantee a valid frame is available immediately after construction, before the
+        // first tick() runs the real behavior-selection/interpreter machinery. We don't have
+        // an environment yet at construction time, so just seed from the first pose we can
+        // find anywhere in the mascot pack rather than starting a full behavior.
+        seedInitialFrame()
+    }
+
+    private fun seedInitialFrame() {
+        for (action in set.actions.values) {
+            val animations = when (action) {
+                is StayAction -> action.animations
+                is MoveAction -> action.animations
+                is AnimateAction -> action.animations
+                else -> null
+            } ?: continue
+            val pose = animations.firstNotNullOfOrNull { it.poses.firstOrNull() }
+            if (pose != null) {
+                applyPose(pose)
+                return
+            }
+        }
     }
 
     fun currentFrameImage(): String = lastImage
@@ -123,7 +152,25 @@ class Mascot(
         }
     }
 
-    private fun pushResolved(action: ShimejiAction, overrides: Map<String, String>, env: ShimejiEnvironment, totalCount: Int) {
+    private fun pushResolved(
+        action: ShimejiAction,
+        overrides: Map<String, String>,
+        env: ShimejiEnvironment,
+        totalCount: Int,
+        visiting: MutableSet<String> = mutableSetOf(),
+        depth: Int = 0,
+    ) {
+        // Guard against unguarded mutual recursion: a Sequence/Select action that references
+        // itself (directly or transitively) would otherwise recurse forever here before ever
+        // pushing a frame, blowing the stack. If we re-enter an action name already on this
+        // resolution path, or go pathologically deep, skip the branch and let the caller's
+        // popFinished() advance past it gracefully instead of crashing.
+        val name = action.name
+        val cyclic = name != null && !visiting.add(name)
+        if (cyclic || depth > MAX_RESOLVE_DEPTH) {
+            popFinished(env, totalCount)
+            return
+        }
         when (action) {
             is SequenceAction -> {
                 val frame = Frame(action, overrides)
@@ -131,7 +178,7 @@ class Mascot(
                 if (action.refs.isEmpty()) {
                     popFinished(env, totalCount)
                 } else {
-                    pushChildRef(action.refs[0], env, totalCount)
+                    pushChildRef(action.refs[0], env, totalCount, visiting, depth + 1)
                 }
             }
             is SelectAction -> {
@@ -142,7 +189,7 @@ class Mascot(
                 if (chosen == null) {
                     popFinished(env, totalCount)
                 } else {
-                    pushChildRef(chosen.second, env, totalCount)
+                    pushChildRef(chosen.second, env, totalCount, visiting, depth + 1)
                 }
             }
             else -> {
@@ -153,14 +200,20 @@ class Mascot(
         }
     }
 
-    private fun pushChildRef(ref: ActionRef, env: ShimejiEnvironment, totalCount: Int) {
+    private fun pushChildRef(
+        ref: ActionRef,
+        env: ShimejiEnvironment,
+        totalCount: Int,
+        visiting: MutableSet<String> = mutableSetOf(),
+        depth: Int = 0,
+    ) {
         val target = set.actions[ref.name]
         if (target == null) {
             // Unresolvable reference: skip forward as if it finished instantly.
             popFinished(env, totalCount)
             return
         }
-        pushResolved(target, ref.overrides, env, totalCount)
+        pushResolved(target, ref.overrides, env, totalCount, visiting, depth)
     }
 
     /** Called after the frame on top of the stack has just been removed because it finished. */

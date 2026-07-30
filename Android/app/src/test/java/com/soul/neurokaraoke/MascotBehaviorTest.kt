@@ -30,4 +30,9 @@ class MascotBehaviorTest {
         assertTrue("Walk" in picks)
         assertFalse("ChaseMouse" in picks)   // cursor condition is MISSING -> false
     }
+
+    @Test fun currentFrameImage_is_non_empty_before_any_tick() {
+        val m = Mascot(set, 500.0, 500.0, Random(1))
+        assertTrue(m.currentFrameImage().isNotEmpty())
+    }
 }
