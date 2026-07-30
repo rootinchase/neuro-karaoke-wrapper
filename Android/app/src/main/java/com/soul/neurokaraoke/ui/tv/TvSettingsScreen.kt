@@ -120,14 +120,24 @@ fun TvSettingsScreen(onClose: () -> Unit) {
 
             Spacer(Modifier.height(24.dp))
             TvSettingsSection("About")
-            TvAboutText(
-                title = "Neuro Karaoke",
-                subtitle = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
-            )
-            TvAboutText(
-                title = "Unofficial fan app",
-                subtitle = "Not affiliated with neurokaraoke.com or its creators"
-            )
+            var aboutFocused by remember { mutableStateOf(false) }
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .onFocusChanged { aboutFocused = it.isFocused }
+                    .focusable()
+                    .background(if (aboutFocused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent)
+            ) {
+                TvAboutText(
+                    title = "Neuro Karaoke",
+                    subtitle = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+                )
+                TvAboutText(
+                    title = "Unofficial fan app",
+                    subtitle = "Not affiliated with neurokaraoke.com or its creators"
+                )
+            }
             Spacer(Modifier.height(24.dp))
         }
     }
