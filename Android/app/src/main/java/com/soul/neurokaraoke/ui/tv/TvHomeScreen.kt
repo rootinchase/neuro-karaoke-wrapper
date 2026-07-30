@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -27,12 +28,21 @@ import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit) {
+fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit, subtitle: String = "") {
     Column(Modifier.padding(vertical = 12.dp)) {
         Text(
             title, style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(start = 48.dp, bottom = 8.dp)
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.padding(start = 48.dp)
         )
+        if (subtitle.isNotEmpty()) {
+            Text(
+                subtitle, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 48.dp)
+            )
+        }
+        Spacer(Modifier.height(10.dp))
         LazyRow(
             modifier = Modifier.focusRestorer(),
             contentPadding = PaddingValues(horizontal = 48.dp),
@@ -58,10 +68,26 @@ fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit) {
                         model = song.coverUrl, contentDescription = song.title,
                         modifier = Modifier.size(180.dp).clip(RoundedCornerShape(12.dp))
                     )
-                    if (focused) {
-                        Text(song.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
-                        Text(song.artist, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-                    }
+                    Spacer(Modifier.height(6.dp))
+                    // Labels are always shown (like tvOS), not only on focus. The focused card is
+                    // emphasized by the surrounding tvFocusScale; the title brightens on focus.
+                    Text(
+                        song.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (focused) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.width(180.dp)
+                    )
+                    Text(
+                        song.artist,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.width(180.dp)
+                    )
                 }
             }
         }
@@ -117,16 +143,27 @@ fun TvHomeScreen(
                 // so "up next" stays within recents instead of falling back to allSongs).
                 TvRail(
                     title = "Recently Played",
+                    subtitle = "Pick up where you left off",
                     songs = recentlyPlayed,
                     onPlay = { song -> playerViewModel.playSongWithQueue(song, recentlyPlayed) }
                 )
             }
         }
         item(key = "trending") {
-            TvRail(title = "Trending", songs = trending, onPlay = onPlay)
+            TvRail(
+                title = "Trending",
+                subtitle = "What everyone's singing",
+                songs = trending,
+                onPlay = onPlay
+            )
         }
         item(key = "newreleases") {
-            TvRail(title = "New Releases", songs = newReleases, onPlay = onPlay)
+            TvRail(
+                title = "New Releases",
+                subtitle = "Fresh from the catalog",
+                songs = newReleases,
+                onPlay = onPlay
+            )
         }
     }
 }
