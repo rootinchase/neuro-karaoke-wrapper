@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import com.soul.neurokaraoke.ui.tv.neurolings.MascotAssets
@@ -29,6 +30,9 @@ import kotlinx.coroutines.withContext
  * focusable/clickable/pointer modifiers, so it never interferes with D-pad navigation.
  */
 private class NeurolingsEngine(val manager: MascotManager, val assets: MascotAssets)
+
+/** Render scale for the mascot sprites — the pack frames are small (~128px), so scale up for TV. */
+private const val MASCOT_SCALE = 1.5f
 
 @Composable
 fun TvNeurolings(counts: Map<String, Int>, modifier: Modifier = Modifier) {
@@ -92,9 +96,18 @@ fun TvNeurolings(counts: Map<String, Int>, modifier: Modifier = Modifier) {
                 contentDescription = null,
                 modifier = Modifier.graphicsLayer {
                     // Place the frame's own anchor point at (x, y); mirror to face travel direction.
+                    // Pivot the scale around that same foot anchor so the mascot stays planted at
+                    // (x, y) as it grows, rather than drifting when scaled about its center.
+                    val w = bitmap.width.toFloat()
+                    val h = bitmap.height.toFloat()
+                    transformOrigin = TransformOrigin(
+                        if (w > 0f) r.anchorX / w else 0.5f,
+                        if (h > 0f) r.anchorY / h else 1f,
+                    )
                     translationX = (r.x - r.anchorX).toFloat()
                     translationY = (r.y - r.anchorY).toFloat()
-                    scaleX = if (r.mirrored) -1f else 1f
+                    scaleX = if (r.mirrored) -MASCOT_SCALE else MASCOT_SCALE
+                    scaleY = MASCOT_SCALE
                 }
             )
         }
