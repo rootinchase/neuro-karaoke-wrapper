@@ -44,8 +44,10 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import com.soul.neurokaraoke.BuildConfig
 import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.repository.SettingsRepository
@@ -64,6 +66,12 @@ fun TvSettingsScreen(onClose: () -> Unit) {
     val autoPlay by SettingsRepository.autoPlay.collectAsState()
     val normalize by SettingsRepository.normalizeVolume.collectAsState()
     val currentLanguage by LocaleManager.currentLanguage.collectAsState()
+    val devUnlocked by SettingsRepository.devOptionsUnlocked.collectAsState()
+    val neurolings by SettingsRepository.neurolingsEnabled.collectAsState()
+
+    val context = LocalContext.current
+    // Tap timestamps for the "7 taps in 5s" version-row unlock (see TvDevUnlock).
+    var versionTaps by remember { mutableStateOf(emptyList<Long>()) }
 
     // First interactive row grabs D-pad focus when the panel opens (nothing else in this
     // overlay would otherwise hold focus).
@@ -120,26 +128,88 @@ fun TvSettingsScreen(onClose: () -> Unit) {
 
             Spacer(Modifier.height(24.dp))
             TvSettingsSection("About")
-            var aboutFocused by remember { mutableStateOf(false) }
+            // The version row is the hidden dev-options unlock: 7 D-pad-center presses in 5s.
+            TvClickableRow(
+                title = "Neuro Karaoke",
+                subtitle = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
+            ) {
+                if (devUnlocked) {
+                    Toast.makeText(context, "Developer options are already enabled", Toast.LENGTH_SHORT).show()
+                    return@TvClickableRow
+                }
+                val result = TvDevUnlock.registerTap(versionTaps, System.currentTimeMillis())
+                versionTaps = result.taps
+                when {
+                    result.unlocked -> {
+                        SettingsRepository.setDevOptionsUnlocked(true)
+                        Toast.makeText(context, "You are now a developer!", Toast.LENGTH_SHORT).show()
+                    }
+                    result.remaining in 1..3 -> {
+                        Toast.makeText(
+                            context,
+                            "You are now ${result.remaining} step(s) away from being a developer",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
+            // Focusable (no-op) so the disclaimer stays reachable by D-pad below the version row.
+            var disclaimerFocused by remember { mutableStateOf(false) }
             Column(
                 Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .onFocusChanged { aboutFocused = it.isFocused }
+                    .onFocusChanged { disclaimerFocused = it.isFocused }
                     .focusable()
-                    .background(if (aboutFocused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent)
+                    .background(if (disclaimerFocused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent)
             ) {
-                TvAboutText(
-                    title = "Neuro Karaoke",
-                    subtitle = "Version ${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE})"
-                )
                 TvAboutText(
                     title = "Unofficial fan app",
                     subtitle = "Not affiliated with neurokaraoke.com or its creators"
                 )
             }
+
+            if (devUnlocked) {
+                Spacer(Modifier.height(24.dp))
+                TvSettingsSection("Developer Options")
+                TvSettingsToggleRow(
+                    title = "Neurolings",
+                    subtitle = "Little mascots wander across Radio & Now Playing",
+                    checked = neurolings
+                ) { SettingsRepository.setNeurolingsEnabled(it) }
+                TvClickableRow(
+                    title = "Lock developer options",
+                    subtitle = "Hide this section (also switches Neurolings off)"
+                ) {
+                    SettingsRepository.setDevOptionsUnlocked(false)
+                    versionTaps = emptyList()
+                    Toast.makeText(context, "Developer options locked", Toast.LENGTH_SHORT).show()
+                }
+            }
             Spacer(Modifier.height(24.dp))
         }
+    }
+}
+
+/** A focusable, D-pad-activatable row (title + subtitle) that fires [onClick] on Enter/center/tap. */
+@Composable
+private fun TvClickableRow(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .onFocusChanged { focused = it.isFocused }
+            .clickable { onClick() }
+            .background(if (focused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent)
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

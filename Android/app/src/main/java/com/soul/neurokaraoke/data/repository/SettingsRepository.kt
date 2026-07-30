@@ -26,6 +26,14 @@ object SettingsRepository {
     private val _themeMode = MutableStateFlow(ThemeMode.AUTO)
     val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
 
+    // TV developer options: hidden until the version row is tapped 7x in 5s (see TvDevUnlock).
+    private val _devOptionsUnlocked = MutableStateFlow(false)
+    val devOptionsUnlocked: StateFlow<Boolean> = _devOptionsUnlocked.asStateFlow()
+
+    // Walking mascots ("Neurolings") — a for-fun dev-only overlay on Radio / Now Playing.
+    private val _neurolingsEnabled = MutableStateFlow(false)
+    val neurolingsEnabled: StateFlow<Boolean> = _neurolingsEnabled.asStateFlow()
+
     @Synchronized
     fun initialize(context: Context) {
         if (prefs != null) return
@@ -37,6 +45,8 @@ object SettingsRepository {
             _autoPlay.value = p.getBoolean(KEY_AUTO_PLAY, true)
             val themeName = p.getString(KEY_THEME_MODE, ThemeMode.AUTO.name) ?: ThemeMode.AUTO.name
             _themeMode.value = try { ThemeMode.valueOf(themeName) } catch (_: Exception) { ThemeMode.AUTO }
+            _devOptionsUnlocked.value = p.getBoolean(KEY_DEV_OPTIONS, false)
+            _neurolingsEnabled.value = p.getBoolean(KEY_NEUROLINGS, false)
         }
     }
 
@@ -66,9 +76,23 @@ object SettingsRepository {
         _themeMode.value = mode
     }
 
+    fun setDevOptionsUnlocked(unlocked: Boolean) {
+        prefs?.edit()?.putBoolean(KEY_DEV_OPTIONS, unlocked)?.apply()
+        _devOptionsUnlocked.value = unlocked
+        // Locking dev options also switches off anything gated behind it.
+        if (!unlocked) setNeurolingsEnabled(false)
+    }
+
+    fun setNeurolingsEnabled(enabled: Boolean) {
+        prefs?.edit()?.putBoolean(KEY_NEUROLINGS, enabled)?.apply()
+        _neurolingsEnabled.value = enabled
+    }
+
     private const val KEY_CROSSFADE = "crossfade_duration"
     private const val KEY_GAPLESS = "gapless_playback"
     private const val KEY_NORMALIZE_VOLUME = "normalize_volume"
     private const val KEY_AUTO_PLAY = "auto_play"
     private const val KEY_THEME_MODE = "theme_mode"
+    private const val KEY_DEV_OPTIONS = "dev_options_unlocked"
+    private const val KEY_NEUROLINGS = "neurolings_enabled"
 }

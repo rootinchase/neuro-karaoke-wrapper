@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
+import com.soul.neurokaraoke.data.repository.SettingsRepository
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 
@@ -54,6 +55,9 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
         }
     }
     val accessToken = authViewModel.getAccessToken()
+
+    // Dev-only walking mascots, shown over Radio / Now Playing when enabled in Developer Options.
+    val neurolingsEnabled by SettingsRepository.neurolingsEnabled.collectAsStateWithLifecycle()
 
     // Hoisted so TvApp can re-request nav focus after the detail overlay closes (TvNavBar
     // still does its own one-shot initial-focus request on first composition).
@@ -134,6 +138,12 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                     TvTab.ACCOUNT -> TvAccountScreen(authViewModel = authViewModel)
                 }
             }
+        }
+
+        // For-fun mascots walk on top of Radio / Now Playing (dev-only). Purely visual — no focus,
+        // no input capture — and drawn under the settings/detail overlays so it never covers them.
+        if (neurolingsEnabled && (tab == TvTab.RADIO || tab == TvTab.NOW_PLAYING)) {
+            TvNeurolings()
         }
 
         selectedPlaylist?.let { playlist ->
