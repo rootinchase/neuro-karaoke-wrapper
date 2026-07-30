@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,6 +37,7 @@ enum class TvTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Home),
     SEARCH("Search", Icons.Default.Search),
     LIBRARY("Library", Icons.Default.LibraryMusic),
+    RADIO("Radio", Icons.Default.Radio),
     ACCOUNT("Account", Icons.Default.AccountCircle),
     NOW_PLAYING("Now Playing", Icons.Default.PlayArrow)
 }

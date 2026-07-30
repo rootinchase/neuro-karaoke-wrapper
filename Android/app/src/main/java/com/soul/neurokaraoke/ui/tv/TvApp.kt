@@ -94,6 +94,7 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                         onPlay = { song, results -> playerViewModel.playSongWithQueue(song, results) },
                         playerViewModel = playerViewModel
                     )
+                    TvTab.RADIO -> TvRadioScreen(playerViewModel = playerViewModel)
                     TvTab.ACCOUNT -> TvAccountScreen(authViewModel = authViewModel)
                 }
             }
