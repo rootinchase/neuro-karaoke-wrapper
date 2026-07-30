@@ -51,6 +51,7 @@ import android.widget.Toast
 import com.soul.neurokaraoke.BuildConfig
 import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.repository.SettingsRepository
+import com.soul.neurokaraoke.ui.tv.neurolings.NeurolingsCounts
 
 /**
  * TV settings panel — rendered as a full-screen overlay by [TvApp]. Binds directly to the shared
@@ -67,7 +68,7 @@ fun TvSettingsScreen(onClose: () -> Unit) {
     val normalize by SettingsRepository.normalizeVolume.collectAsState()
     val currentLanguage by LocaleManager.currentLanguage.collectAsState()
     val devUnlocked by SettingsRepository.devOptionsUnlocked.collectAsState()
-    val neurolings by SettingsRepository.neurolingsEnabled.collectAsState()
+    val neurolingsCounts by SettingsRepository.neurolingsCounts.collectAsState()
 
     val context = LocalContext.current
     // Tap timestamps for the "7 taps in 5s" version-row unlock (see TvDevUnlock).
@@ -172,11 +173,21 @@ fun TvSettingsScreen(onClose: () -> Unit) {
             if (devUnlocked) {
                 Spacer(Modifier.height(24.dp))
                 TvSettingsSection("Developer Options")
-                TvSettingsToggleRow(
+                TvAboutText(
                     title = "Neurolings",
-                    subtitle = "Little mascots wander across Radio & Now Playing",
-                    checked = neurolings
-                ) { SettingsRepository.setNeurolingsEnabled(it) }
+                    subtitle = "Shimeji mascots by the NeurolingsCE community — dev-only toy"
+                )
+                NeurolingsCounts.CHARACTERS.forEach { character ->
+                    TvStepperRow(
+                        label = character,
+                        value = neurolingsCounts[character] ?: 0
+                    ) { delta ->
+                        SettingsRepository.setNeurolingsCount(
+                            character,
+                            NeurolingsCounts.step(neurolingsCounts[character] ?: 0, delta)
+                        )
+                    }
+                }
                 TvClickableRow(
                     title = "Lock developer options",
                     subtitle = "Hide this section (also switches Neurolings off)"
@@ -331,6 +342,53 @@ private fun TvCrossfadeRow(
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
+    }
+}
+
+/** A focusable D-pad stepper row (Left/Right adjust) showing `−  N  +` for a Neuroling character. */
+@Composable
+private fun TvStepperRow(label: String, value: Int, onStep: (Int) -> Unit) {
+    var focused by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .onFocusChanged { focused = it.isFocused }
+            .focusable()
+            .onKeyEvent { e ->
+                if (e.type == KeyEventType.KeyUp) {
+                    when (e.key) {
+                        Key.DirectionLeft -> { onStep(-1); true }
+                        Key.DirectionRight -> { onStep(1); true }
+                        else -> false
+                    }
+                } else false
+            }
+            .background(if (focused) MaterialTheme.colorScheme.primary.copy(alpha = 0.18f) else Color.Transparent)
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "−",
+                style = MaterialTheme.typography.titleLarge,
+                color = if (value > NeurolingsCounts.MIN) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "$value",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
+            Text(
+                "+",
+                style = MaterialTheme.typography.titleLarge,
+                color = if (value < NeurolingsCounts.MAX) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

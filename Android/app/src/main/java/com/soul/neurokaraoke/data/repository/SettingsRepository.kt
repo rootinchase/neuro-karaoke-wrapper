@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.soul.neurokaraoke.ui.theme.ThemeMode
+import com.soul.neurokaraoke.ui.tv.neurolings.NeurolingsCounts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,9 +31,9 @@ object SettingsRepository {
     private val _devOptionsUnlocked = MutableStateFlow(false)
     val devOptionsUnlocked: StateFlow<Boolean> = _devOptionsUnlocked.asStateFlow()
 
-    // Walking mascots ("Neurolings") — a for-fun dev-only overlay on Radio / Now Playing.
-    private val _neurolingsEnabled = MutableStateFlow(false)
-    val neurolingsEnabled: StateFlow<Boolean> = _neurolingsEnabled.asStateFlow()
+    // Walking mascots ("Neurolings") — a for-fun dev-only overlay, per-character live counts.
+    private val _neurolingsCounts = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val neurolingsCounts: StateFlow<Map<String, Int>> = _neurolingsCounts.asStateFlow()
 
     @Synchronized
     fun initialize(context: Context) {
@@ -46,7 +47,7 @@ object SettingsRepository {
             val themeName = p.getString(KEY_THEME_MODE, ThemeMode.AUTO.name) ?: ThemeMode.AUTO.name
             _themeMode.value = try { ThemeMode.valueOf(themeName) } catch (_: Exception) { ThemeMode.AUTO }
             _devOptionsUnlocked.value = p.getBoolean(KEY_DEV_OPTIONS, false)
-            _neurolingsEnabled.value = p.getBoolean(KEY_NEUROLINGS, false)
+            _neurolingsCounts.value = NeurolingsCounts.parse(p.getString(KEY_NEUROLINGS_COUNTS, null))
         }
     }
 
@@ -80,12 +81,19 @@ object SettingsRepository {
         prefs?.edit()?.putBoolean(KEY_DEV_OPTIONS, unlocked)?.apply()
         _devOptionsUnlocked.value = unlocked
         // Locking dev options also switches off anything gated behind it.
-        if (!unlocked) setNeurolingsEnabled(false)
+        if (!unlocked) {
+            prefs?.edit()?.remove(KEY_NEUROLINGS_COUNTS)?.apply()
+            _neurolingsCounts.value = emptyMap()
+        }
     }
 
-    fun setNeurolingsEnabled(enabled: Boolean) {
-        prefs?.edit()?.putBoolean(KEY_NEUROLINGS, enabled)?.apply()
-        _neurolingsEnabled.value = enabled
+    fun setNeurolingsCount(name: String, count: Int) {
+        val m = _neurolingsCounts.value.toMutableMap()
+        val c = NeurolingsCounts.clamp(count)
+        if (c <= 0) m.remove(name) else m[name] = c
+        val nm = m.toMap()
+        prefs?.edit()?.putString(KEY_NEUROLINGS_COUNTS, NeurolingsCounts.serialize(nm))?.apply()
+        _neurolingsCounts.value = nm
     }
 
     private const val KEY_CROSSFADE = "crossfade_duration"
@@ -94,5 +102,5 @@ object SettingsRepository {
     private const val KEY_AUTO_PLAY = "auto_play"
     private const val KEY_THEME_MODE = "theme_mode"
     private const val KEY_DEV_OPTIONS = "dev_options_unlocked"
-    private const val KEY_NEUROLINGS = "neurolings_enabled"
+    private const val KEY_NEUROLINGS_COUNTS = "neurolings_counts"
 }
