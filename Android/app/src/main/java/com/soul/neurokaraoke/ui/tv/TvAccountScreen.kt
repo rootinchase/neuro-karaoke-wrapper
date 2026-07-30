@@ -64,11 +64,21 @@ private val tvProfileGradient = listOf(Color(0xFF7C5CFC), Color(0xFFB47BFF))
 @Composable
 fun TvAccountScreen(authViewModel: AuthViewModel) {
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val user = authState.user
+    var showPairing by remember { mutableStateOf(false) }
 
     if (!authState.isLoggedIn || user == null) {
-        TvSignInPrompt(onSignIn = { context.startActivity(authViewModel.getSignInIntent()) })
+        if (showPairing) {
+            TvPairScreen(
+                onPaired = { jwt ->
+                    authViewModel.handleJwtFromWebView(jwt)
+                    showPairing = false
+                },
+                onBack = { showPairing = false }
+            )
+        } else {
+            TvSignInPrompt(onSignIn = { showPairing = true })
+        }
         return
     }
 
