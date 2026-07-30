@@ -2,6 +2,7 @@ package com.soul.neurokaraoke.ui.tv
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -176,14 +177,9 @@ private fun PairKey(
                 else MaterialTheme.colorScheme.surfaceVariant
             )
             .onFocusChanged { focused = it.isFocused }
-            .focusable()
-            .onKeyEvent {
-                if (it.type == KeyEventType.KeyUp &&
-                    (it.key == Key.Enter || it.key == Key.DirectionCenter)
-                ) {
-                    onActivate(); true
-                } else false
-            }
+            // clickable handles D-pad center/Enter AND pointer taps (focusable() alone
+            // ignores taps), so the keypad is drivable by both remote and touch.
+            .clickable { onActivate() }
             .tvFocusScale(focused, scale = 1.12f),
         contentAlignment = Alignment.Center
     ) {
