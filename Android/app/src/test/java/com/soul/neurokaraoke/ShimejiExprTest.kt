@@ -46,4 +46,18 @@ class ShimejiExprTest {
 
     @Test fun hashbrace_and_dollarbrace_stripped() =
         assertEquals(4.0, ShimejiExpr.evalDouble("\${2+2}", scope()), 1e-9)
+
+    @Test fun combined_conditions_with_embedded_delimiters() {
+        val s = object : ShimejiExpr.Scope {
+            override fun variable(path: String): Any? = when (path) {
+                "mascot.totalCount" -> 3.0
+                "mascot.anchor" -> Any()
+                else -> MISSING
+            }
+            override fun method(path: String, args: List<Any?>): Any? =
+                if (path == "mascot.environment.floor.isOn") true else MISSING
+        }
+        assertTrue(ShimejiExpr.evalBoolean(
+            "(#{mascot.totalCount < 50}) && (#{mascot.environment.floor.isOn(mascot.anchor)})", s))
+    }
 }

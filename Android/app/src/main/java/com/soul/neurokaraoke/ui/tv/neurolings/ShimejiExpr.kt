@@ -38,13 +38,9 @@ object ShimejiExpr {
 
     private fun stripBraces(expr: String): String {
         var s = expr.trim()
-        if (s.startsWith("\${") || s.startsWith("#{")) {
-            if (s.endsWith("}")) {
-                s = s.substring(2, s.length - 1)
-            } else {
-                s = s.substring(2)
-            }
-        }
+        // Strip all EL delimiter markers (${, #{, and }) anywhere in the expression.
+        // This handles combined conditions like "(#{cond1}) && (#{cond2})".
+        s = s.replace("\${", "").replace("#{", "").replace("}", "")
         return s.trim()
     }
 
