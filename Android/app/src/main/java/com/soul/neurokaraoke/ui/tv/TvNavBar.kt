@@ -1,21 +1,37 @@
 package com.soul.neurokaraoke.ui.tv
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Icon
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
 import androidx.tv.material3.Text
 
-enum class TvTab(val label: String) {
-    HOME("Home"), SEARCH("Search"), LIBRARY("Library"),
-    ACCOUNT("Account"), NOW_PLAYING("Now Playing")
+enum class TvTab(val label: String, val icon: ImageVector) {
+    HOME("Home", Icons.Default.Home),
+    SEARCH("Search", Icons.Default.Search),
+    LIBRARY("Library", Icons.Default.LibraryMusic),
+    ACCOUNT("Account", Icons.Default.AccountCircle),
+    NOW_PLAYING("Now Playing", Icons.Default.PlayArrow)
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -45,7 +61,18 @@ fun TvNavBar(
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .let { base -> if (tab == selected) base.focusRequester(focusRequester) else base }
             ) {
-                Text(tab.label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = tab.icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(tab.label)
+                }
             }
         }
     }

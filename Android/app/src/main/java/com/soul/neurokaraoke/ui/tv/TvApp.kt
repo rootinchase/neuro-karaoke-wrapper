@@ -15,9 +15,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
@@ -54,6 +59,10 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     }
 
     Box(Modifier.fillMaxSize()) {
+        // tvOS-style immersive backdrop: the current song's cover art, blurred and
+        // dimmed, sits behind the whole UI so it doesn't read as flat black.
+        TvImmersiveBackground(playerViewModel)
+
         Column(
             Modifier
                 .fillMaxSize()
@@ -96,6 +105,7 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
+                TvImmersiveBackground(playerViewModel)
                 TvDetailScreen(
                     playlist = playlist,
                     onPlayAll = { songs -> songs.firstOrNull()?.let { playerViewModel.playSongWithQueue(it, songs) } },
@@ -104,5 +114,45 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                 )
             }
         }
+    }
+}
+
+/**
+ * Full-screen ambient backdrop: the now-playing cover art, heavily blurred and
+ * covered by a light-to-medium scrim so foreground text and the nav bar stay
+ * legible while the UI still reads as a rich tvOS-style surface rather than flat
+ * black. Collects player state in its own composable so only this layer — not the
+ * nav bar or content — recomposes on playback ticks. (blur is a no-op below API 31;
+ * the scrim still applies, so it degrades gracefully to a dimmed cover.)
+ */
+@Composable
+private fun TvImmersiveBackground(playerViewModel: PlayerViewModel) {
+    val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
+    val cover = playerState.currentSong?.coverUrl
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        if (!cover.isNullOrBlank()) {
+            AsyncImage(
+                model = cover,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize().blur(80.dp)
+            )
+        }
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.50f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.80f)
+                        )
+                    )
+                )
+        )
     }
 }
