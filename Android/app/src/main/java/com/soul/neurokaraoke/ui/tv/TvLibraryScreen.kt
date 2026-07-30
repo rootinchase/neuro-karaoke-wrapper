@@ -4,8 +4,11 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -13,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -76,17 +80,23 @@ fun TvLibraryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(12.dp))
+                        .tvCoverFocus(focused)
                 )
+                Spacer(Modifier.height(8.dp))
                 Text(
                     playlist.title,
                     style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1
+                    color = if (focused) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 val songCount = if (playlist.songCount > 0) playlist.songCount else playlist.songs.size
                 Text(
                     "$songCount songs",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

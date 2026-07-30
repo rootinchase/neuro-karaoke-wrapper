@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,7 +32,9 @@ import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit, subtitle: String = "") {
     Column(Modifier.padding(vertical = 12.dp)) {
         Text(
-            title, style = MaterialTheme.typography.headlineSmall,
+            title,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(start = 48.dp)
         )
@@ -66,9 +69,9 @@ fun TvRail(title: String, songs: List<Song>, onPlay: (Song) -> Unit, subtitle: S
                 ) {
                     AsyncImage(
                         model = song.coverUrl, contentDescription = song.title,
-                        modifier = Modifier.size(180.dp).clip(RoundedCornerShape(12.dp))
+                        modifier = Modifier.size(180.dp).tvCoverFocus(focused)
                     )
-                    Spacer(Modifier.height(6.dp))
+                    Spacer(Modifier.height(8.dp))
                     // Labels are always shown (like tvOS), not only on focus. The focused card is
                     // emphasized by the surrounding tvFocusScale; the title brightens on focus.
                     Text(
