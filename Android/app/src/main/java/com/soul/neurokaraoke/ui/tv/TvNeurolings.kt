@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 private class NeurolingsEngine(val manager: MascotManager, val assets: MascotAssets)
 
 /** Render scale for the mascot sprites — the pack frames are small (~128px), so scale up for TV. */
-private const val MASCOT_SCALE = 1.5f
+private const val MASCOT_SCALE = 2f
 
 @Composable
 fun TvNeurolings(counts: Map<String, Int>, modifier: Modifier = Modifier) {
