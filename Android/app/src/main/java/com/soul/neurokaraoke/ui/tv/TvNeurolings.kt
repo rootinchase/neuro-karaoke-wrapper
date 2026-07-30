@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -44,19 +45,29 @@ fun TvNeurolings(counts: Map<String, Int>, modifier: Modifier = Modifier) {
 
     BoxWithConstraints(modifier.fillMaxSize()) {
         val eng = engine ?: return@BoxWithConstraints
-        val env = ShimejiEnvironment(
-            left = 0.0,
-            top = 0.0,
-            right = constraints.maxWidth.toDouble(),
-            bottom = constraints.maxHeight.toDouble()
-        )
+        // Stable across recompositions for fixed TV bounds — a fresh instance every recomposition
+        // (ShimejiEnvironment has no equals()) would re-key the tick LaunchedEffect below and
+        // reset its accumulator every frame, degrading the fixed-timestep loop to jittery ticks.
+        val env = remember(constraints.maxWidth, constraints.maxHeight) {
+            ShimejiEnvironment(
+                left = 0.0,
+                top = 0.0,
+                right = constraints.maxWidth.toDouble(),
+                bottom = constraints.maxHeight.toDouble()
+            )
+        }
 
         LaunchedEffect(counts, eng) { eng.manager.sync(counts, env) }
 
         // Fixed-timestep tick loop: accumulate real elapsed ms, step the engine every
         // ShimejiPhysics.TICK_MS (25fps), and bump frameTick so the render snapshot recomposes.
-        var frameTick by mutableLongStateOf(0L)
-        LaunchedEffect(eng, env) {
+        // Must be `remember`ed (not a bare property delegate) so the tick coroutine's own writes
+        // to it don't get treated as a fresh initial value each recomposition.
+        var frameTick by remember { mutableLongStateOf(0L) }
+        // Keyed on `eng` alone: `env` is now stable for the composable's lifetime (recreated only
+        // if the TV's pixel bounds actually change), so the accumulator (`acc`/`last`) survives
+        // across recompositions instead of restarting every tick.
+        LaunchedEffect(eng) {
             var acc = 0L
             var last = 0L
             while (true) {
