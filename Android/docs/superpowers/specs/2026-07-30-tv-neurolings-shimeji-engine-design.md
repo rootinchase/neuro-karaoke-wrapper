@@ -34,7 +34,7 @@ The Shimeji model:
 - A real evaluator for the EL-subset actually used (see below).
 - Gravity + a screen-derived environment: bottom = floor, left/right = walls, top = ceiling. Mascots wander the floor, climb walls, cross the ceiling, jump between them, and fall when unsupported — exactly as the pack's behaviors dictate.
 - Render the real pack frames at 25 fps, positioned by `imageAnchor`, mirrored horizontally for facing.
-- All 6 characters bundled; mascots roam over **every** TV screen when the Neurolings toggle is on.
+- All 6 characters bundled; **per-character population control** (each 0–10, default 0) — the overlay spawns exactly that many of each character and roams them over **every** TV screen.
 
 **Deferred / inert (not this build):**
 - **Mouse behaviors** (`ChaseMouse`, `SitAndFaceMouse`, `Dragged`, `Thrown`, pat `Hotspot`s) — a TV has no cursor. Their conditions reference `mascot.environment.cursor.*`; the environment reports "no cursor" so these are never selected. Faithful: same engine, cursor simply never exists.
@@ -53,7 +53,7 @@ New package `ui/tv/neurolings/`, each file one responsibility:
 - `ShimejiPhysics.kt` — the constants and primitive steps: gravity, air resistance, terminal velocity, bounce damping, jump impulse — **using Shimeji-ee's standard values** (pinned from the reference engine in the plan). Pure functions for a falling step, a bounce, a border test.
 - `ShimejiEnvironment.kt` — screen rect → the four borders and their `isOn(anchor)` tests; "no cursor / no IE" stubs.
 - `Mascot.kt` — one mascot's simulation: current behavior + action + pose cursor + position + velocity + facing. `tick()` advances the pose timer, applies velocity, and on action-end runs the behavior selector (weighted random over passing conditions, honoring `NextBehaviorList`). Falls under gravity when unsupported.
-- `MascotManager.kt` — owns the loaded `MascotSet`s and the live mascots; seeds N mascots across the characters; `tick(nowMs, bounds)` steps them all; exposes an immutable render snapshot (list of `{bitmap, x, y, mirrored}`).
+- `MascotManager.kt` — owns the loaded `MascotSet`s and the live mascots; seeds mascots to match the requested **per-character counts** (adds/removes as the counts change, so adjusting a stepper live adds or culls that character); `tick(nowMs, bounds)` steps them all; exposes an immutable render snapshot (list of `{bitmap, x, y, mirrored}`).
 - `MascotAssets.kt` — decode a pack's PNG frames into a cached `Map<String, ImageBitmap>` (decode once, reuse every frame).
 - `TvNeurolings.kt` — **rewritten** Compose overlay: on first show, load the 6 sets (off the main thread) and build a `MascotManager`; drive a 25 fps clock via `withFrameNanos`; render each snapshot entry via `Canvas`/`Image` at `x,y` with horizontal mirror. Holds no focus, captures no input. Pauses its clock while not composed.
 
@@ -84,10 +84,11 @@ Use Shimeji-ee's standard constants (gravity, air-resistance, bounce, jump impul
 - Cap the live mascot count (default ~6, one per character) to keep the TV GPU/CPU comfortable; the count is a constant, easily raised.
 - The overlay pauses its clock when not composed and is skipped entirely when the toggle is off, so there is zero cost for normal users.
 
-## Integration
+## Integration & population control
 
-- The existing Developer Options → **Neurolings** toggle (`SettingsRepository.neurolingsEnabled`) stays the gate. No settings changes.
-- `TvApp` currently renders `TvNeurolings()` only on Radio / Now Playing; change the gate to render on **all** tabs when enabled (drop the tab check), still under the settings/detail overlays and above content.
+- The single boolean `SettingsRepository.neurolingsEnabled` is **replaced** by per-character counts: `neurolingsCounts: StateFlow<Map<String, Int>>` (character name → 0..10), persisted (e.g. one `"Name=count"` string per character, or a small JSON blob, in the same `app_settings` prefs). `setNeurolingsCount(name, count)` clamps to `0..10`. Locking Developer Options resets every count to 0. There is no all-characters cap beyond the per-character 10 (max 60 total is the user's call via the steppers).
+- Developer Options → **Neurolings** becomes a small sub-section: an attribution line, then **one stepper row per character** (Neuron, Weuron, Eviling, Vedaling, Cerber, Tuteling). Each row shows the character name and a `−  N  +` control; it is a focusable row where **D-pad Left decrements and Right increments** (0..10), reusing the crossfade-row interaction, with visible `−`/`+` glyphs so the plus/minus affordance is clear on the remote.
+- `TvApp` renders the overlay on **all** tabs whenever the total requested count (`sum of the map`) is `> 0`, under the settings/detail overlays and above content. Adjusting a stepper updates the count flow; the manager adds/culls that character live.
 - The overlay remains non-focusable and input-transparent.
 
 ## Licensing / attribution
@@ -99,11 +100,12 @@ The pack art is community work (e.g. Neuron by Paccha; configs by @promote., @da
 - `ShimejiExpr` — arithmetic, comparisons, ternary, `Math.*`, variable resolution, inert-sentinel falsity. (JVM unit tests.)
 - Behavior selection — weighted-random pick over a set with a seeded RNG; conditions filter the candidate set. (Seeded, deterministic test.)
 - Physics step — a `Fall` step accumulates gravity and clamps to terminal velocity; a border `isOn` test. (Pure unit tests.)
+- Count clamp / persistence round-trip — `setNeurolingsCount` clamps to `0..10`; the map serializes and parses back identically. (Pure unit test on the serialize/parse + clamp helper.)
 - XML parse — a small inline `actions.xml`/`behaviors.xml` fixture parses into the expected model. (Instrumented or Robolectric-free via a parser abstraction.)
 
 ## Verification (emulator, `emulator-5554`)
 
-1. Enable Neurolings in Developer Options; mascots appear and **animate through real frames** (not a static icon), wandering the floor.
+1. In Developer Options, each character starts at **0**. Increment a character's stepper with D-pad Right; that many of it appear and **animate through real frames** (not a static icon), wandering the floor. Decrement culls them; 0 for all removes the overlay. Steppers clamp at 0 and 10.
 2. They walk/run and **flip to face travel direction**; idle animations (wink, hearts, sit, lie) occur over time.
 3. Gravity: a mascot that ends up off the floor **falls and settles** on the bottom edge.
 4. Wall/ceiling: over time a mascot climbs a side wall and/or crosses the top, per the pack's behaviors.
