@@ -36,6 +36,29 @@ class MascotBehaviorTest {
         assertTrue(m.currentFrameImage().isNotEmpty())
     }
 
+    @Test fun move_walks_toward_target_and_faces_left() {
+        // A behavior whose action is a Sequence walking Walk toward a TargetX to the LEFT of the
+        // mascot's start. Regression for "everyone walks right into the wall and freezes": the Move
+        // must seek the target (go left), flip facing left, and finish when it arrives.
+        val walkLeft = MascotSet(
+            name = "WL",
+            actions = mapOf(
+                "GoLeft" to SequenceAction("GoLeft", loop = false,
+                    refs = listOf(ActionRef("Walk", mapOf("TargetX" to "100")))),
+                "Walk" to MoveAction("Walk", BorderType.FLOOR,
+                    listOf(Animation(null, listOf(Pose("/w.png", 64, 128, -2, 0, 1))))),
+                "Stand" to StayAction("Stand", BorderType.FLOOR, listOf(anim("/s.png")))
+            ),
+            behaviors = listOf(Behavior("GoLeft", 100, false, null, null)),
+            imgDir = "x"
+        )
+        val env = ShimejiEnvironment(0.0, 0.0, 1000.0, 500.0)
+        val m = Mascot(walkLeft, startX = 500.0, startY = 500.0, rng = Random(3))
+        repeat(400) { m.tick(env, totalCount = 1) }
+        assertTrue("should have moved left toward 100 (was ${m.x})", m.x <= 101.0)
+        assertFalse("should face left while walking left", m.lookRight)
+    }
+
     @Test fun cyclic_loop_sequence_does_not_stack_overflow() {
         // Action "A" is a Sequence that loops forever by referencing only itself. Nothing in
         // this pack ever terminates naturally -- this reproduces the pathological case where a

@@ -60,7 +60,18 @@ class Mascot(
         var poseTicksLeft: Int = 0
         var durationTicksLeft: Int? = null
         var vel: ShimejiPhysics.Vel = ShimejiPhysics.Vel(0.0, 0.0)
+        // Move destination (Shimeji "TargetX"/"TargetY"): a Move walks toward this coordinate and
+        // finishes when it arrives. Null for Move actions without a target (fall back to raw
+        // pose-velocity motion) and for all non-Move actions.
+        var targetX: Double? = null
+        var targetY: Double? = null
     }
+
+    // Targets of the currently-ticking leaf, mirrored here so the expression Scope can resolve the
+    // `TargetX`/`TargetY`/`FootX` variables that some Animation/Select conditions reference
+    // (e.g. ClimbWall picks its up vs down animation from `#{TargetY < mascot.anchor.y}`).
+    private var curTargetX: Double? = null
+    private var curTargetY: Double? = null
 
     init {
         // Guarantee a valid frame is available immediately after construction, before the
@@ -316,6 +327,18 @@ class Mascot(
         frame.overrides["InitialVY"]?.let { vy = ShimejiExpr.evalDouble(it, scope) }
         frame.vel = ShimejiPhysics.Vel(vx, vy)
 
+        // Resolve the move target (if any) BEFORE picking the animation, so conditions that
+        // reference TargetX/TargetY (via the Scope's live curTarget* fields) see the right values.
+        frame.targetX = frame.overrides["TargetX"]?.let { ShimejiExpr.evalDouble(it, scope) }
+        frame.targetY = frame.overrides["TargetY"]?.let { ShimejiExpr.evalDouble(it, scope) }
+        curTargetX = frame.targetX
+        curTargetY = frame.targetY
+        // Face the horizontal target from the start so the walk animation mirrors correctly.
+        val border = leafBorder(frame)
+        if (frame.targetX != null && (border == BorderType.FLOOR || border == BorderType.CEILING)) {
+            lookRight = frame.targetX!! > x
+        }
+
         val animations = when (val a = frame.action) {
             is StayAction -> a.animations
             is MoveAction -> a.animations
@@ -366,8 +389,9 @@ class Mascot(
             }
             is MoveAction -> {
                 stepPose(frame, a.animations, loop = true)
-                currentPoseOf(frame, a.animations)?.let { applyMoveVelocity(it) }
-                borderHit(a.border, env) || durationExpired
+                val reached = currentPoseOf(frame, a.animations)
+                    ?.let { moveTowardTarget(frame, a.border, it) } ?: false
+                reached || borderHit(a.border, env) || durationExpired
             }
             is EmbeddedAction -> tickEmbedded(frame, a, env, totalCount) || durationExpired
             else -> true // Sequence/Select never sit at the top of the stack as a leaf.
@@ -404,7 +428,36 @@ class Mascot(
         return animations[frame.animIndex].poses.getOrNull(frame.poseIndex)
     }
 
-    /** Poses are authored assuming lookRight; sign-flip velX when facing the other way. */
+    /**
+     * Advance a [MoveAction] one tick. When the frame has a target coordinate (Shimeji
+     * `TargetX`/`TargetY`), walk toward it at the current pose's speed and report whether it has
+     * arrived; facing follows the travel direction. Floor/Ceiling moves seek [Frame.targetX]
+     * horizontally; Wall moves (climbing) seek [Frame.targetY] vertically. With no target, fall
+     * back to raw pose-velocity motion (never "reached").
+     */
+    private fun moveTowardTarget(frame: Frame, border: BorderType, pose: Pose): Boolean {
+        val vertical = border == BorderType.WALL
+        if (!vertical) {
+            val tx = frame.targetX ?: run { applyMoveVelocity(pose); return false }
+            val speed = kotlin.math.abs(pose.velX.toDouble())
+            val dist = tx - x
+            val dir = if (dist > 0.0) 1.0 else if (dist < 0.0) -1.0 else 0.0
+            x += dir * kotlin.math.min(speed, kotlin.math.abs(dist))
+            y += pose.velY.toDouble()
+            if (dir > 0.0) lookRight = true else if (dir < 0.0) lookRight = false
+            return kotlin.math.abs(tx - x) <= 0.5
+        } else {
+            val ty = frame.targetY ?: run { applyMoveVelocity(pose); return false }
+            val speed = kotlin.math.abs(pose.velY.toDouble())
+            val dist = ty - y
+            val dir = if (dist > 0.0) 1.0 else if (dist < 0.0) -1.0 else 0.0
+            y += dir * kotlin.math.min(speed, kotlin.math.abs(dist))
+            x += pose.velX.toDouble()
+            return kotlin.math.abs(ty - y) <= 0.5
+        }
+    }
+
+    /** No-target fallback: poses are authored facing left; sign-flip velX when facing right. */
     private fun applyMoveVelocity(pose: Pose) {
         val dx = if (lookRight) -pose.velX.toDouble() else pose.velX.toDouble()
         x += dx
@@ -431,9 +484,9 @@ class Mascot(
                 env.onFloor(Anchor(x, y))
             }
             "Look" -> {
-                when (frame.overrides["Direction"]) {
-                    "Left" -> lookRight = false
-                    "Right" -> lookRight = true
+                // The pack sets facing via <ActionReference Name="Look" LookRight="true|false|expr"/>.
+                frame.overrides["LookRight"]?.let {
+                    lookRight = ShimejiExpr.evalBoolean(it, MascotScope(totalCount, env))
                 }
                 true
             }
@@ -463,9 +516,20 @@ class Mascot(
     private inner class MascotScope(private val totalCount: Int, private val env: ShimejiEnvironment) : ShimejiExpr.Scope {
         override fun variable(path: String): Any? = when (path) {
             "mascot.anchor" -> Anchor(x, y)
+            "mascot.anchor.x", "FootX" -> x
+            "mascot.anchor.y" -> y
             "mascot.lookRight" -> lookRight
             "mascot.totalCount" -> totalCount.toDouble()
+            "mascot.environment.screen.width" -> env.width
             "mascot.environment.screen.height" -> env.height
+            "mascot.environment.workArea.left" -> env.left
+            "mascot.environment.workArea.right" -> env.right
+            "mascot.environment.workArea.top" -> env.top
+            "mascot.environment.workArea.bottom" -> env.bottom
+            "mascot.environment.workArea.width" -> env.width
+            "mascot.environment.workArea.height" -> env.height
+            "TargetX" -> curTargetX ?: ShimejiExpr.MISSING
+            "TargetY" -> curTargetY ?: ShimejiExpr.MISSING
             else -> ShimejiExpr.MISSING
         }
 
