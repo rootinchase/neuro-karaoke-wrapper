@@ -35,4 +35,27 @@ class MascotBehaviorTest {
         val m = Mascot(set, 500.0, 500.0, Random(1))
         assertTrue(m.currentFrameImage().isNotEmpty())
     }
+
+    @Test fun cyclic_loop_sequence_does_not_stack_overflow() {
+        // Action "A" is a Sequence that loops forever by referencing only itself. Nothing in
+        // this pack ever terminates naturally -- this reproduces the pathological case where a
+        // mascot pack's action graph is (accidentally or maliciously) cyclic.
+        val cyclicSet = MascotSet(
+            name = "Cyclic",
+            actions = mapOf(
+                "A" to SequenceAction("A", loop = true, refs = listOf(ActionRef("A", emptyMap())))
+            ),
+            behaviors = listOf(
+                Behavior("A", 100, false, null, null)
+            ),
+            imgDir = "x"
+        )
+        val env = ShimejiEnvironment(0.0, 0.0, 1000.0, 500.0)
+        val m = Mascot(cyclicSet, 500.0, 500.0, Random(7))
+        // Must not throw StackOverflowError (or anything else); the interpreter should degrade
+        // gracefully by abandoning the unresolvable behavior and trying again next tick.
+        for (i in 0 until 5) {
+            m.tick(env, totalCount = 1)
+        }
+    }
 }

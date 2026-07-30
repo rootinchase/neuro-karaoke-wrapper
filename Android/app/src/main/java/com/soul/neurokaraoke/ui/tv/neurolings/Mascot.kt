@@ -16,6 +16,18 @@ class Mascot(
     private companion object {
         /** Max synchronous push-resolution depth (Sequence/Select nesting), as a cycle-safety net. */
         const val MAX_RESOLVE_DEPTH = 32
+
+        /**
+         * Hard cap on how many [Frame]s the interpreter stack may hold at once. This is the
+         * bulletproof, path-independent recursion guard: every [pushResolved] call for a
+         * Sequence/Select pushes a Frame before descending further, on EVERY path that reaches
+         * it -- including [popFinished]'s next-sibling and `Loop="true"` restart paths, which
+         * re-enter [pushChildRef] with a fresh (reset) visited-names set and so are NOT caught
+         * by the per-descent cycle guard alone. Capping the stack size bounds both the
+         * [ArrayDeque] growth and the native call-stack depth on every path, regardless of
+         * whether a cycle is detectable by name.
+         */
+        const val MAX_FRAMES = 64
     }
 
     /** Anchor position (foot point). */
@@ -160,11 +172,19 @@ class Mascot(
         visiting: MutableSet<String> = mutableSetOf(),
         depth: Int = 0,
     ) {
-        // Guard against unguarded mutual recursion: a Sequence/Select action that references
-        // itself (directly or transitively) would otherwise recurse forever here before ever
-        // pushing a frame, blowing the stack. If we re-enter an action name already on this
-        // resolution path, or go pathologically deep, skip the branch and let the caller's
-        // popFinished() advance past it gracefully instead of crashing.
+        // Bulletproof, path-independent recursion guard: checked before this call pushes
+        // anything or recurses further, on every path (including popFinished's next-sibling
+        // and Loop="true" restart re-entries, which reset the per-descent `visiting` set below
+        // and so cannot be relied on alone). A cyclic/self-referential action tree degrades
+        // gracefully -- abandon the whole in-progress behavior -- instead of growing the
+        // ArrayDeque and the native call stack without bound.
+        if (stack.size >= MAX_FRAMES) {
+            abandonCurrentBehavior()
+            return
+        }
+
+        // Secondary, cheaper guard: catches direct/transitive self-reference within a single
+        // synchronous descent (e.g. non-looping A -> A) before it even reaches the stack cap.
         val name = action.name
         val cyclic = name != null && !visiting.add(name)
         if (cyclic || depth > MAX_RESOLVE_DEPTH) {
@@ -216,6 +236,19 @@ class Mascot(
         pushResolved(target, ref.overrides, env, totalCount, visiting, depth)
     }
 
+    /**
+     * Bail out of whatever behavior/action tree is currently in progress (e.g. because the
+     * [MAX_FRAMES] cap tripped) without any further resolution work. Clears the interpreter
+     * stack outright and lines up the next selection, exactly like a normal, non-cyclic
+     * behavior finishing -- the next tick()/selectBehavior() call picks a fresh behavior.
+     */
+    private fun abandonCurrentBehavior() {
+        stack.clear()
+        pendingNext = behaviorNextOnFinish
+        behaviorNextOnFinish = null
+        currentBehaviorName = null
+    }
+
     /** Called after the frame on top of the stack has just been removed because it finished. */
     private fun popFinished(env: ShimejiEnvironment, totalCount: Int) {
         while (stack.isNotEmpty()) {
@@ -248,9 +281,7 @@ class Mascot(
             }
         }
         // Stack is empty: the whole behavior chain finished. Line up the next selection.
-        pendingNext = behaviorNextOnFinish
-        behaviorNextOnFinish = null
-        currentBehaviorName = null
+        abandonCurrentBehavior()
     }
 
     private fun stepStack(env: ShimejiEnvironment, totalCount: Int) {
