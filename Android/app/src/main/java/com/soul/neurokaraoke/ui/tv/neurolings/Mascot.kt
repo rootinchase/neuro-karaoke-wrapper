@@ -111,7 +111,15 @@ class Mascot(
 
         if (stack.isEmpty()) {
             val name = selectBehavior(env, totalCount)
-            if (name != null) startBehavior(name, env, totalCount)
+            if (name != null) {
+                startBehavior(name, env, totalCount)
+            } else if (!env.onFloor(Anchor(x, y))) {
+                // No applicable behavior while off the floor (e.g. a wall/ceiling climb sequence
+                // ended mid-air, where no border condition matches): fall back to the floor to
+                // recover instead of freezing in place. This mirrors Shimeji's always-available
+                // Fall fallback for an unsupported mascot.
+                triggerFall(env, totalCount)
+            }
         }
 
         stepStack(env, totalCount)
@@ -476,7 +484,9 @@ class Mascot(
     }
 
     private fun tickEmbedded(frame: Frame, action: EmbeddedAction, env: ShimejiEnvironment, totalCount: Int): Boolean {
-        return when (action.className) {
+        // className is the full Shimeji class path (e.g. com.group_finity.mascot.action.Fall);
+        // match on the final segment.
+        return when (action.className.substringAfterLast('.')) {
             "Fall", "Jump" -> {
                 frame.vel = ShimejiPhysics.fallStep(frame.vel)
                 x += frame.vel.x

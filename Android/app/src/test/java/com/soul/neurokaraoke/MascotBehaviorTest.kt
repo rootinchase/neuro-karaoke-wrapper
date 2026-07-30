@@ -59,6 +59,29 @@ class MascotBehaviorTest {
         assertFalse("should face left while walking left", m.lookRight)
     }
 
+    @Test fun stuck_midair_mascot_falls_to_recover() {
+        // A pack whose only behavior requires being on the floor. Dropped mid-air, the mascot can
+        // select no behavior; rather than freezing (the "climbs the wall, crosses the ceiling, then
+        // bugs out" report), it must fall back to the floor. Also exercises that the embedded Fall
+        // action actually applies gravity (className is the full com.group_finity... path).
+        val set = MascotSet(
+            name = "R",
+            actions = mapOf(
+                "Stand" to StayAction("Stand", BorderType.FLOOR, listOf(anim("/s.png"))),
+                "Fall" to EmbeddedAction("Fall", "com.group_finity.mascot.action.Fall")
+            ),
+            behaviors = listOf(
+                Behavior("Stand", 100, false, "#{mascot.environment.floor.isOn(mascot.anchor)}", null)
+            ),
+            imgDir = "x"
+        )
+        val env = ShimejiEnvironment(0.0, 0.0, 1000.0, 500.0)
+        val m = Mascot(set, startX = 500.0, startY = 100.0, rng = Random(1)) // mid-air
+        val y0 = m.y
+        repeat(30) { m.tick(env, totalCount = 1) }
+        assertTrue("should have fallen from $y0 toward the floor (now ${m.y})", m.y > y0)
+    }
+
     @Test fun cyclic_loop_sequence_does_not_stack_overflow() {
         // Action "A" is a Sequence that loops forever by referencing only itself. Nothing in
         // this pack ever terminates naturally -- this reproduces the pathological case where a
