@@ -69,7 +69,9 @@ fun TvLibraryScreen(
                     .tvFocusScale(focused)
             ) {
                 AsyncImage(
-                    model = playlist.coverUrl,
+                    // Setlists store their art in previewCovers (2x2 on phone); coverUrl is
+                    // usually blank for them, so fall back to the first preview cover.
+                    model = playlist.coverUrl.ifBlank { playlist.previewCovers.firstOrNull().orEmpty() },
                     contentDescription = playlist.title,
                     modifier = Modifier
                         .fillMaxWidth()

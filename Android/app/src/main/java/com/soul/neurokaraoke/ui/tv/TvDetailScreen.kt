@@ -80,7 +80,8 @@ fun TvDetailScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AsyncImage(
-                    model = playlist.coverUrl,
+                    // coverUrl is usually blank for setlists — fall back to a preview cover.
+                    model = playlist.coverUrl.ifBlank { playlist.previewCovers.firstOrNull().orEmpty() },
                     contentDescription = playlist.title,
                     modifier = Modifier
                         .size(240.dp)
