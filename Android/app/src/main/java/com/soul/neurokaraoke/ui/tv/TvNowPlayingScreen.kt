@@ -109,7 +109,12 @@ private fun TvTransportButton(
  * sized for a 10-foot TV UI.
  */
 @Composable
-fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
+fun TvNowPlayingScreen(
+    playerViewModel: PlayerViewModel,
+    accessToken: String?,
+    fullscreen: Boolean = false,
+    onToggleFullscreen: () -> Unit = {}
+) {
     val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
     val song = playerState.currentSong
 
@@ -237,6 +242,8 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
                     onClick = { playerViewModel.cycleRepeatMode() }
                 )
             }
+            Spacer(Modifier.height(16.dp))
+            TvFullscreenButton(fullscreen = fullscreen, onClick = onToggleFullscreen)
         }
 
         // RIGHT: lyrics (reused verbatim from the phone/tablet player)

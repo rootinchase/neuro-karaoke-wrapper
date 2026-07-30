@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.ui.tv
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,10 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     var tab by remember { mutableStateOf(TvTab.HOME) }
     // Holds the playlist the user drilled into from a rail's cover card.
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    // Immersive fullscreen for Radio / Now Playing — hides the nav bar so art +
+    // lyrics fill the screen. Back exits it.
+    var fullscreen by remember { mutableStateOf(false) }
+    BackHandler(enabled = fullscreen) { fullscreen = false }
     val accessToken = authViewModel.getAccessToken()
 
     // Hoisted so TvApp can re-request nav focus after the detail overlay closes (TvNavBar
@@ -69,12 +74,14 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                 .focusProperties { canFocus = selectedPlaylist == null }
                 .focusGroup()
         ) {
-            TvNavBar(
-                selected = tab,
-                onSelect = { tab = it },
-                modifier = Modifier.padding(24.dp),
-                focusRequester = navFocusRequester
-            )
+            if (!fullscreen) {
+                TvNavBar(
+                    selected = tab,
+                    onSelect = { tab = it },
+                    modifier = Modifier.padding(24.dp),
+                    focusRequester = navFocusRequester
+                )
+            }
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 when (tab) {
                     TvTab.HOME -> TvHomeScreen(
@@ -88,13 +95,20 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                     )
                     TvTab.NOW_PLAYING -> TvNowPlayingScreen(
                         playerViewModel = playerViewModel,
-                        accessToken = accessToken
+                        accessToken = accessToken,
+                        fullscreen = fullscreen,
+                        onToggleFullscreen = { fullscreen = !fullscreen }
                     )
                     TvTab.SEARCH -> TvSearchScreen(
                         onPlay = { song, results -> playerViewModel.playSongWithQueue(song, results) },
                         playerViewModel = playerViewModel
                     )
-                    TvTab.RADIO -> TvRadioScreen(playerViewModel = playerViewModel)
+                    TvTab.RADIO -> TvRadioScreen(
+                        playerViewModel = playerViewModel,
+                        accessToken = accessToken,
+                        fullscreen = fullscreen,
+                        onToggleFullscreen = { fullscreen = !fullscreen }
+                    )
                     TvTab.ACCOUNT -> TvAccountScreen(authViewModel = authViewModel)
                 }
             }
