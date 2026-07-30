@@ -175,7 +175,7 @@ fun TvSettingsScreen(onClose: () -> Unit) {
                 TvSettingsSection("Developer Options")
                 TvAboutText(
                     title = "Neurolings",
-                    subtitle = "Shimeji mascots by the NeurolingsCE community — dev-only toy"
+                    subtitle = "Shimeji mascots by the Neuro-sama community — dev-only toy"
                 )
                 NeurolingsCounts.CHARACTERS.forEach { character ->
                     TvStepperRow(
