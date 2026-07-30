@@ -138,7 +138,7 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
         ) {
             Box(
                 modifier = Modifier
-                    .widthIn(max = 420.dp)
+                    .widthIn(max = 240.dp)
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(16.dp))
@@ -151,7 +151,7 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(20.dp))
             Text(
                 song.title,
                 style = MaterialTheme.typography.headlineMedium,
@@ -167,7 +167,7 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             LinearProgressIndicator(
                 progress = {
                     if (playerState.duration > 0) {
@@ -189,7 +189,7 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -210,7 +210,7 @@ fun TvNowPlayingScreen(playerViewModel: PlayerViewModel, accessToken: String?) {
                     onClick = { playerViewModel.playPrevious() }
                 )
                 Box(
-                    modifier = Modifier.size(72.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
+                    modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
                     TvTransportButton(
