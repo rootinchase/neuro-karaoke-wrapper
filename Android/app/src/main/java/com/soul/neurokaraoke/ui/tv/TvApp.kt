@@ -22,11 +22,17 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.soul.neurokaraoke.data.api.ApiPublicPlaylist
+import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Playlist
+import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.repository.FavoritesRepository
 import com.soul.neurokaraoke.data.repository.SettingsRepository
+import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 import com.soul.neurokaraoke.ui.tv.neurolings.NeurolingsCounts
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
@@ -36,6 +42,9 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     var tab by remember { mutableStateOf(TvTab.HOME) }
     // Holds the playlist the user drilled into from a rail's cover card.
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
+    // Private user playlists need the authenticated song loader in the detail overlay;
+    // setlists/public use the default public loader. Tracks which the drilled-in card was.
+    var selectedIsUserPlaylist by remember { mutableStateOf(false) }
     // Immersive fullscreen for Radio / Now Playing — hides the nav bar so art +
     // lyrics fill the screen. Back exits it.
     var fullscreen by remember { mutableStateOf(false) }
@@ -56,6 +65,31 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
         }
     }
     val accessToken = authViewModel.getAccessToken()
+    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Library collections — hoisted here so their state survives tab switches and the
+    // detail overlay. Setlists stay inside TvLibraryScreen (they ride the player state).
+    val context = LocalContext.current
+    val favoritesRepo = remember { FavoritesRepository(context) }
+    val userPlaylistRepo = remember { UserPlaylistRepository(context) }
+    val favourites by favoritesRepo.favorites.collectAsStateWithLifecycle()
+    val userPlaylists by userPlaylistRepo.playlists.collectAsStateWithLifecycle()
+
+    var publicPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+    val nkApi = remember { NeuroKaraokeApi() }
+    LaunchedEffect(Unit) {
+        nkApi.fetchPublicPlaylists().onSuccess { list ->
+            publicPlaylists = list.map { it.toTvPlaylist() }
+        }
+    }
+    // Pull server-synced favourites + playlists once signed in.
+    LaunchedEffect(accessToken) {
+        val token = accessToken
+        if (!token.isNullOrBlank()) {
+            favoritesRepo.syncFromServer(token)
+            userPlaylistRepo.syncFromServer(token)
+        }
+    }
 
     // Dev-only walking mascots, shown on every tab once any per-character count is above zero.
     val neurolingsCounts by SettingsRepository.neurolingsCounts.collectAsStateWithLifecycle()
@@ -117,7 +151,18 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                         playerViewModel = playerViewModel
                     )
                     TvTab.LIBRARY -> TvLibraryScreen(
-                        onOpenDetail = { playlist -> selectedPlaylist = playlist },
+                        publicPlaylists = publicPlaylists,
+                        favourites = favourites,
+                        userPlaylists = userPlaylists,
+                        isLoggedIn = authState.isLoggedIn,
+                        onOpenDetail = { playlist ->
+                            selectedIsUserPlaylist = false; selectedPlaylist = playlist
+                        },
+                        onOpenUserPlaylist = { playlist ->
+                            selectedIsUserPlaylist = true; selectedPlaylist = playlist
+                        },
+                        onPlayFavourite = { song, queue -> playerViewModel.playSongWithQueue(song, queue) },
+                        onSignIn = { tab = TvTab.ACCOUNT },
                         playerViewModel = playerViewModel
                     )
                     TvTab.NOW_PLAYING -> TvNowPlayingScreen(
@@ -158,7 +203,13 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                     playlist = playlist,
                     onPlayAll = { songs -> songs.firstOrNull()?.let { playerViewModel.playSongWithQueue(it, songs) } },
                     onPlaySong = { song, songs -> playerViewModel.playSongWithQueue(song, songs) },
-                    onBack = { selectedPlaylist = null }
+                    onBack = { selectedPlaylist = null },
+                    songLoader = if (selectedIsUserPlaylist) {
+                        { pl ->
+                            userPlaylistRepo.loadPlaylistSongs(pl.id, accessToken)
+                            userPlaylistRepo.getPlaylist(pl.id)?.songs ?: pl.songs
+                        }
+                    } else null
                 )
             }
         }
@@ -184,6 +235,18 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
  * nav bar or content — recomposes on playback ticks. (blur is a no-op below API 31;
  * the scrim still applies, so it degrades gracefully to a dimmed cover.)
  */
+/** Map a public-playlist API row to the shared [Playlist] model (mirrors ExploreScreen). */
+private fun ApiPublicPlaylist.toTvPlaylist(): Playlist = Playlist(
+    id = id,
+    title = name,
+    description = createdBy?.let { "by $it" } ?: "",
+    coverUrl = coverUrl ?: "",
+    previewCovers = mosaicCovers.ifEmpty { coverUrl?.let { listOf(it) } ?: emptyList() },
+    songCount = songCount,
+    updatedAt = updatedAt ?: 0L,
+    playCount = playCount
+)
+
 @Composable
 private fun TvImmersiveBackground(playerViewModel: PlayerViewModel) {
     val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()

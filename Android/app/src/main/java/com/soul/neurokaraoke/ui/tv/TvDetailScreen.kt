@@ -56,13 +56,18 @@ fun TvDetailScreen(
     playlist: Playlist,
     onPlayAll: (List<Song>) -> Unit,
     onPlaySong: (Song, List<Song>) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    // Public endpoint loader (SongRepository) works for setlists + public playlists.
+    // Private user playlists need auth — callers pass a loader backed by UserPlaylistRepository.
+    songLoader: (suspend (Playlist) -> List<Song>)? = null
 ) {
     val repo = remember { SongRepository() }
     var songs by remember { mutableStateOf(playlist.songs) }
 
     LaunchedEffect(playlist.id) {
-        repo.getPlaylistSongs(playlist.id).getOrNull()?.let { if (it.isNotEmpty()) songs = it }
+        val loaded = if (songLoader != null) songLoader(playlist)
+        else repo.getPlaylistSongs(playlist.id).getOrNull()
+        if (!loaded.isNullOrEmpty()) songs = loaded
     }
 
     BackHandler { onBack() }
