@@ -3,11 +3,15 @@ package com.soul.neurokaraoke.ui.tv
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -140,16 +144,20 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                 .focusGroup()
         ) {
             if (!fullscreen) {
-                Box(Modifier.fillMaxWidth().padding(24.dp)) {
+                Row(
+                    Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     TvNavBar(
                         selected = tab,
                         onSelect = { tab = it },
                         focusRequester = navFocusRequester
                     )
+                    Spacer(Modifier.width(12.dp))
                     TvSettingsButton(
                         onClick = { showSettings = true },
-                        focusRequester = gearFocusRequester,
-                        modifier = Modifier.align(Alignment.CenterEnd)
+                        focusRequester = gearFocusRequester
                     )
                 }
             }
