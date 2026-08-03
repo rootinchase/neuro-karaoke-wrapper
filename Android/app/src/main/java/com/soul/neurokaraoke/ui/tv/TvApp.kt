@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.soul.neurokaraoke.data.api.ApiPublicPlaylist
+import com.soul.neurokaraoke.data.api.Video
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
@@ -45,6 +46,8 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
     // Private user playlists need the authenticated song loader in the detail overlay;
     // setlists/public use the default public loader. Tracks which the drilled-in card was.
     var selectedIsUserPlaylist by remember { mutableStateOf(false) }
+    // The video the user opened from the Videos tab (fullscreen HLS player overlay).
+    var selectedVideo by remember { mutableStateOf<Video?>(null) }
     // Immersive fullscreen for Radio / Now Playing — hides the nav bar so art +
     // lyrics fill the screen. Back exits it.
     var fullscreen by remember { mutableStateOf(false) }
@@ -108,6 +111,13 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
         }
     }
 
+    // Same focus restore when the fullscreen video player overlay closes.
+    LaunchedEffect(selectedVideo) {
+        if (selectedVideo == null) {
+            runCatching { navFocusRequester.requestFocus() }
+        }
+    }
+
     // TvApp is the TV entry point — unlike the phone, there is no NavGraph
     // composable(Screen.Search.route) { LaunchedEffect(Unit) { onLoadAllSongs() } }
     // to trigger this, so Home's "Trending"/"New Releases" rails and the Search
@@ -126,7 +136,7 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
         Column(
             Modifier
                 .fillMaxSize()
-                .focusProperties { canFocus = selectedPlaylist == null && !showSettings }
+                .focusProperties { canFocus = selectedPlaylist == null && selectedVideo == null && !showSettings }
                 .focusGroup()
         ) {
             if (!fullscreen) {
@@ -181,6 +191,7 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                         fullscreen = fullscreen,
                         onToggleFullscreen = { fullscreen = !fullscreen }
                     )
+                    TvTab.VIDEOS -> TvVideosScreen(onPlay = { selectedVideo = it })
                     TvTab.ACCOUNT -> TvAccountScreen(authViewModel = authViewModel)
                 }
             }
@@ -210,6 +221,16 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                             userPlaylistRepo.getPlaylist(pl.id)?.songs ?: pl.songs
                         }
                     } else null
+                )
+            }
+        }
+
+        selectedVideo?.let { video ->
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                TvVideoPlayerScreen(
+                    video = video,
+                    playerViewModel = playerViewModel,
+                    onBack = { selectedVideo = null }
                 )
             }
         }

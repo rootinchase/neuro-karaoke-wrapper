@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +39,7 @@ enum class TvTab(val label: String, val icon: ImageVector) {
     SEARCH("Search", Icons.Default.Search),
     LIBRARY("Library", Icons.Default.LibraryMusic),
     RADIO("Radio", Icons.Default.Radio),
+    VIDEOS("Videos", Icons.Default.Movie),
     ACCOUNT("Account", Icons.Default.AccountCircle),
     NOW_PLAYING("Now Playing", Icons.Default.PlayArrow)
 }

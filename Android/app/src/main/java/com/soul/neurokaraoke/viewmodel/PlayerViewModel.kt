@@ -790,6 +790,11 @@ class PlayerViewModel(
     /**
      * Toggle play/pause
      */
+    /** Pause playback if currently playing (e.g. when a fullscreen video takes over audio). */
+    fun pausePlayback() {
+        mediaController?.let { if (it.isPlaying) it.pause() }
+    }
+
     fun togglePlayPause() {
         val controller = mediaController ?: return
         if (controller.isPlaying) {
