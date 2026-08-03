@@ -17,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Brush
@@ -26,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.soul.neurokaraoke.data.api.ApiPublicPlaylist
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Playlist
@@ -257,11 +257,18 @@ private fun TvImmersiveBackground(playerViewModel: PlayerViewModel) {
             .background(MaterialTheme.colorScheme.background)
     ) {
         if (!cover.isNullOrBlank()) {
+            val context = LocalContext.current
             AsyncImage(
-                model = cover,
+                // Blur via a Coil transformation, not Modifier.blur() — the latter is a
+                // no-op below API 31, so older TV / Fire OS devices showed a sharp cover.
+                model = ImageRequest.Builder(context)
+                    .data(cover)
+                    .transformations(BlurTransformation())
+                    .crossfade(true)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize().blur(80.dp)
+                modifier = Modifier.fillMaxSize()
             )
         }
         Box(
