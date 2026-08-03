@@ -21,7 +21,7 @@ android {
         // Differs from `namespace` on purpose — AGP handles the distinction.
         applicationId = "com.neurokaraoke"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 11
         versionName = "1.8.0"
 
