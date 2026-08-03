@@ -144,20 +144,18 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
                 .focusGroup()
         ) {
             if (!fullscreen) {
-                Row(
-                    Modifier.fillMaxWidth().padding(24.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Box(Modifier.fillMaxWidth().padding(24.dp)) {
+                    // Nav pill centered; settings gear pinned to the right corner.
                     TvNavBar(
                         selected = tab,
                         onSelect = { tab = it },
-                        focusRequester = navFocusRequester
+                        focusRequester = navFocusRequester,
+                        modifier = Modifier.align(Alignment.Center)
                     )
-                    Spacer(Modifier.width(12.dp))
                     TvSettingsButton(
                         onClick = { showSettings = true },
-                        focusRequester = gearFocusRequester
+                        focusRequester = gearFocusRequester,
+                        modifier = Modifier.align(Alignment.CenterEnd)
                     )
                 }
             }
