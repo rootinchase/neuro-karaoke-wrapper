@@ -7,7 +7,9 @@ import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -264,6 +266,7 @@ class PlayerViewModel(
         }
     }
 
+    @OptIn(UnstableApi::class)
     private fun initializeMediaController() {
         val context = getApplication<Application>()
         val sessionToken = SessionToken(

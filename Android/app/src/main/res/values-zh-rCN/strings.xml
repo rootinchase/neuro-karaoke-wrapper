@@ -362,6 +362,8 @@
     <string name="car_title_library">曲库</string>
     <string name="car_title_playlists">播放列表</string>
     <string name="car_title_radio">电台</string>
+    <string name="car_title_more">更多</string>
+    <string name="car_item_public_playlists">公开播放列表</string>
     <string name="car_empty_no_songs">暂无缓存歌曲，请先在手机上打开应用。</string>
     <string name="car_empty_no_playlists">暂无播放列表</string>
     <string name="car_radio_station_title">Neuro 21 电台</string>
