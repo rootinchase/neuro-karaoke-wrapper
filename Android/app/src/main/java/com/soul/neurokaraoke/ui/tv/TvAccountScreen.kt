@@ -66,25 +66,21 @@ fun TvAccountScreen(authViewModel: AuthViewModel) {
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
     val user = authState.user
     var showPairing by remember { mutableStateOf(false) }
-    var showLogin by remember { mutableStateOf(false) }
 
     if (!authState.isLoggedIn || user == null) {
-        when {
-            showLogin -> TvLoginScreen(
-                authViewModel = authViewModel,
-                onLoggedIn = { showLogin = false },
-                onBack = { showLogin = false }
-            )
-            showPairing -> TvPairScreen(
+        if (showPairing) {
+            TvPairScreen(
                 onPaired = { jwt ->
                     authViewModel.handleJwtFromWebView(jwt)
                     showPairing = false
                 },
                 onBack = { showPairing = false }
             )
-            else -> TvSignInPrompt(
-                onLogin = { showLogin = true },
-                onPair = { showPairing = true }
+        } else {
+            // The sign-in card carries both username/password and a Discord (→ pairing) option.
+            TvLoginScreen(
+                authViewModel = authViewModel,
+                onDiscord = { showPairing = true }
             )
         }
         return
@@ -314,64 +310,3 @@ private fun BadgeChip(badge: Badge) {
     }
 }
 
-@Composable
-private fun TvSignInPrompt(onLogin: () -> Unit, onPair: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.library_sign_in_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.library_sign_in_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                SignInChoice("Sign in with username", onLogin)
-                SignInChoice("Pair a device", onPair)
-            }
-        }
-    }
-}
-
-@Composable
-private fun SignInChoice(label: String, onActivate: () -> Unit) {
-    var focused by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(
-                if (focused) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.surfaceVariant
-            )
-            .onFocusChanged { focused = it.isFocused }
-            .focusable()
-            .onKeyEvent {
-                if (it.type == KeyEventType.KeyUp &&
-                    (it.key == Key.Enter || it.key == Key.DirectionCenter)
-                ) {
-                    onActivate(); true
-                } else false
-            }
-            .tvFocusScale(focused)
-            .padding(horizontal = 24.dp, vertical = 12.dp)
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.titleSmall,
-            color = if (focused) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurface
-        )
-    }
-}

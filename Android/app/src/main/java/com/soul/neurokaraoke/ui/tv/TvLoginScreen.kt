@@ -1,19 +1,9 @@
 package com.soul.neurokaraoke.ui.tv
 
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Arrangement
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -23,86 +13,52 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.tv.material3.Button
-import androidx.tv.material3.ExperimentalTvMaterial3Api
+import com.soul.neurokaraoke.ui.components.LoginCard
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 
+private const val SITE_URL = "https://neurokaraoke.com"
+
 /**
- * TV username/password sign-in. Uses focusable text fields (system IME → full character
- * set, needed for real passwords) rather than the a-z-only [TvKeyboard]. Drives
- * [AuthViewModel.loginWithPassword]; closes via [onLoggedIn] once signed in.
+ * TV username/password sign-in, styled as the web sign-in card ([LoginCard]). Uses
+ * focusable text fields (system IME → full character set for passwords). "Continue with
+ * Discord" routes to device pairing; account/legal links open the website.
  */
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvLoginScreen(
     authViewModel: AuthViewModel,
-    onLoggedIn: () -> Unit,
-    onBack: () -> Unit,
+    onDiscord: () -> Unit,
 ) {
+    val context = LocalContext.current
     val state by authViewModel.uiState.collectAsStateWithLifecycle()
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val usernameFocus = remember { FocusRequester() }
 
-    BackHandler { onBack() }
     LaunchedEffect(Unit) {
         authViewModel.clearError()
         runCatching { usernameFocus.requestFocus() }
     }
-    LaunchedEffect(state.isLoggedIn) { if (state.isLoggedIn) onLoggedIn() }
+
+    fun open(url: String) {
+        runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+    }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            modifier = Modifier.width(480.dp).padding(32.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "Sign in",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            OutlinedTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = { Text("Username") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().focusRequester(usernameFocus)
-            )
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth()
-            )
-            state.error?.let { err ->
-                Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-            Button(
-                onClick = { authViewModel.loginWithPassword(username, password) },
-                enabled = username.isNotBlank() && password.length >= 6 && !state.isLoading,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Text("Sign in")
-                }
-            }
-        }
+        LoginCard(
+            username = username,
+            onUsername = { username = it },
+            password = password,
+            onPassword = { password = it },
+            error = state.error,
+            loading = state.isLoading,
+            onSignIn = { authViewModel.loginWithPassword(username, password) },
+            onDiscord = onDiscord,
+            onCreateAccount = { open(SITE_URL) },
+            onTerms = { open(SITE_URL) },
+            onPrivacy = { open(SITE_URL) },
+            usernameFocusRequester = usernameFocus,
+        )
     }
 }
