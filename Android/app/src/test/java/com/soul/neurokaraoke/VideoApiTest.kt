@@ -10,7 +10,8 @@ class VideoApiTest {
     private val sample = """
       {"items":[
         {"id":"A1","name":"Shrek","description":"d","cloudflareId":"guid-1",
-         "thumbnailUrl":"http://t/1.jpg","category":2,"views":694,"upvotes":24,
+         "thumbnailUrl":"https://vz-26de8a11-dde.b-cdn.net/guid-1/thumbnail.jpg","category":2,
+         "views":694,"upvotes":24,
          "songId":null,"songTitle":null,"createdBy":"flashfire8","creatorAvatarUrl":null}
       ],"totalCount":1368,"page":1,"pageSize":1}
     """.trimIndent()
@@ -32,6 +33,20 @@ class VideoApiTest {
     fun builds_hls_url() {
         val v = VideoApi().parseVideoPage(sample).items[0]
         assertEquals("https://vz-26de8a11-dde.b-cdn.net/guid-1/playlist.m3u8", v.hlsUrl)
+    }
+
+    @Test
+    fun hls_url_from_thumbnail_when_cloudflareId_null() {
+        // Karaoke videos have cloudflareId = null; the guid lives in thumbnailUrl.
+        val karaoke = """
+          {"items":[{"id":"K1","name":"n","description":"d","cloudflareId":null,
+           "thumbnailUrl":"https://vz-26de8a11-dde.b-cdn.net/abc-123/thumbnail.jpg",
+           "category":0,"views":1,"upvotes":0,"songId":null,"songTitle":null,
+           "createdBy":null,"creatorAvatarUrl":null}],"totalCount":1}
+        """.trimIndent()
+        val v = VideoApi().parseVideoPage(karaoke).items[0]
+        assertNull(v.songId)
+        assertEquals("https://vz-26de8a11-dde.b-cdn.net/abc-123/playlist.m3u8", v.hlsUrl)
     }
 
     @Test

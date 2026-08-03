@@ -25,8 +25,18 @@ data class Video(
     val createdBy: String?,
     val creatorAvatarUrl: String?,
 ) {
+    /**
+     * Bunny HLS stream. Derived from [thumbnailUrl] (which every video has —
+     * `https://<host>/<guid>/thumbnail*.jpg`) rather than [cloudflareId], because
+     * cloudflareId is null for Karaoke videos. `playlist.m3u8` serves both categories;
+     * the API's own `play.mp4`/embed `url` is unreliable (stale/404).
+     */
     val hlsUrl: String
-        get() = "https://vz-26de8a11-dde.b-cdn.net/$cloudflareId/playlist.m3u8"
+        get() = if (thumbnailUrl.isNotBlank()) {
+            thumbnailUrl.substringBeforeLast('/') + "/playlist.m3u8"
+        } else {
+            "https://vz-26de8a11-dde.b-cdn.net/$cloudflareId/playlist.m3u8"
+        }
 }
 
 data class VideoPage(val items: List<Video>, val totalCount: Int)
