@@ -1,6 +1,5 @@
 package com.soul.neurokaraoke.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,6 +49,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.ui.theme.EvilPrimary
 import com.soul.neurokaraoke.ui.theme.NeuroPrimary
@@ -83,8 +83,10 @@ fun LoginCard(
 
     Column(
         modifier = modifier
-            .fillMaxWidth()
+            // widthIn before fillMaxWidth so the fill caps at 440dp (fill-then-widthIn
+            // pins min-width to the parent and the cap never applies).
             .widthIn(max = 440.dp)
+            .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
@@ -92,8 +94,10 @@ fun LoginCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Image(
-            painter = androidx.compose.ui.res.painterResource(R.mipmap.neuro_round),
+        // Coil (not painterResource) — the logo is an adaptive-icon mipmap, which
+        // painterResource can't load ("Only VectorDrawables and rasterized assets…").
+        AsyncImage(
+            model = R.mipmap.neuro_round,
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.size(56.dp).clip(CircleShape)
