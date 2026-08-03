@@ -4,11 +4,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.soul.neurokaraoke.ui.components.UsernameLoginDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +66,8 @@ fun MainScreen(
     val downloadProgress by downloadViewModel.downloadProgress.collectAsState()
     var showFullPlayer by remember { mutableStateOf(false) }
     var showPairCarDialog by remember { mutableStateOf(false) }
+    var showLoginChooser by remember { mutableStateOf(false) }
+    var showUsernameLogin by remember { mutableStateOf(false) }
 
     val playerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
@@ -112,7 +118,10 @@ fun MainScreen(
             NeuroTopBar(
                 isLoggedIn = authState.isLoggedIn,
                 avatarUrl = authState.user?.avatarUrl,
-                onProfileClick = { context.startActivity(authViewModel.getSignInIntent()) },
+                onProfileClick = {
+                    if (authState.isLoggedIn) context.startActivity(authViewModel.getSignInIntent())
+                    else showLoginChooser = true
+                },
                 onPairCar = { showPairCarDialog = true },
                 onSignOut = { authViewModel.logout() }
             )
@@ -299,5 +308,28 @@ fun MainScreen(
         } else {
             showPairCarDialog = false
         }
+    }
+
+    // Sign-in chooser: Discord (existing) or username/password (merged login).
+    if (showLoginChooser) {
+        AlertDialog(
+            onDismissRequest = { showLoginChooser = false },
+            title = { Text("Sign in") },
+            text = { Text("Choose how to sign in.") },
+            confirmButton = {
+                TextButton(onClick = { showLoginChooser = false; showUsernameLogin = true }) {
+                    Text("Username & password")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showLoginChooser = false
+                    context.startActivity(authViewModel.getSignInIntent())
+                }) { Text("Discord") }
+            }
+        )
+    }
+    if (showUsernameLogin) {
+        UsernameLoginDialog(authViewModel = authViewModel, onDismiss = { showUsernameLogin = false })
     }
 }
