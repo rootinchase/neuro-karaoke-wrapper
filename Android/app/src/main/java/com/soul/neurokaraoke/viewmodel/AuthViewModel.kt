@@ -91,6 +91,28 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Sign in with a NeuroKaraoke username + password. On success the collected
+     * currentUser flow flips isLoggedIn; on failure [AuthUiState.error] is set.
+     */
+    fun loginWithPassword(username: String, password: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            authRepository.loginWithPassword(username.trim(), password).fold(
+                onSuccess = { user ->
+                    _uiState.value = _uiState.value.copy(
+                        user = user, isLoggedIn = true, isLoading = false, error = null
+                    )
+                },
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false, error = e.message ?: "Sign-in failed"
+                    )
+                }
+            )
+        }
+    }
+
+    /**
      * Get the NeuroKaraoke API token for authenticated API calls.
      * Prefers the API JWT; falls back to Discord token.
      */

@@ -243,6 +243,59 @@ class AuthRepository(context: Context) {
     }
 
     /**
+     * Sign in with a NeuroKaraoke username + password (the "merged" login the iOS app
+     * and website use). Yields the same JWT as the Discord flow. The password-login JWT
+     * carries no Discord claims, so we build a minimal [User] from the entered username;
+     * avatar/level/badges are enriched later by ProfileViewModel.load(token).
+     */
+    suspend fun loginWithPassword(username: String, password: String): Result<User> =
+        withContext(Dispatchers.IO) {
+            var conn: HttpURLConnection? = null
+            try {
+                conn = (URL(LOGIN_URL).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json")
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    doOutput = true
+                }
+                val body = JSONObject()
+                    .put("username", username)
+                    .put("password", password)
+                    .toString()
+                conn.outputStream.use { it.write(body.toByteArray()) }
+
+                val code = conn.responseCode
+                if (code != HttpURLConnection.HTTP_OK) {
+                    val err = conn.errorStream?.bufferedReader()?.readText().orEmpty()
+                    val msg = runCatching { JSONObject(err).optString("message") }
+                        .getOrNull()?.takeIf { it.isNotBlank() } ?: "Sign-in failed ($code)"
+                    return@withContext Result.failure(Exception(msg))
+                }
+
+                val jwt = parseLoginToken(conn.inputStream.bufferedReader().readText())
+                if (jwt.isBlank()) {
+                    return@withContext Result.failure(Exception("No token in response"))
+                }
+                val user = User(
+                    id = username,
+                    username = username,
+                    discriminator = "0",
+                    avatar = null,
+                    apiToken = jwt,
+                )
+                saveUser(user)
+                Log.d("AuthRepository", "Password login OK for $username")
+                Result.success(user)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Password login failed", e)
+                Result.failure(e)
+            } finally {
+                conn?.disconnect()
+            }
+        }
+
+    /**
      * Log out the current user
      */
     fun logout() {
@@ -257,6 +310,12 @@ class AuthRepository(context: Context) {
     fun isUserLoggedIn(): Boolean = _isLoggedIn.value
 
     companion object {
+        /** Extract the JWT from a login response (`token`, falling back to `accessToken`). */
+        fun parseLoginToken(json: String): String {
+            val o = JSONObject(json)
+            return o.optString("token", o.optString("accessToken", ""))
+        }
+
         private const val PREFS_NAME = "neurokaraoke_auth"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
@@ -270,6 +329,7 @@ class AuthRepository(context: Context) {
         private const val DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
         private const val DISCORD_USER_URL = "https://discord.com/api/users/@me"
         private const val NEUROKARAOKE_TOKEN_EXCHANGE_URL = "https://idk.neurokaraoke.com/api/auth/discord-token"
+        private const val LOGIN_URL = "https://idk.neurokaraoke.com/api/auth/login"
 
         private fun generateCodeVerifier(): String {
             val bytes = ByteArray(64)
