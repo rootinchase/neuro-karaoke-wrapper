@@ -136,6 +136,8 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    // Real org.json on the JVM test classpath — the android.jar stub throws "not mocked".
+    testImplementation("org.json:json:20240303")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
