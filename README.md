@@ -158,4 +158,9 @@ yarn build:mac
 - **Coroutines & Flow** - Asynchronous programming
 - **Android AudioFX** - Equalizer and BassBoost effects
 ## License
-MIT
+
+Neuro Karaoke is licensed under the **GNU General Public License v3.0** — see
+[LICENSE](LICENSE). It bundles GPL-3.0 components (the NeurolingsCE mascot packs
+by Luda, and a Neurolings animation engine ported from Shimeji-ee), so the
+project as a whole is GPL-3.0. Third-party attributions are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

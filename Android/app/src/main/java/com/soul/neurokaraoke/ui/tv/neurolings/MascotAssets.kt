@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2026 Aferil
+ *
+ * This file is part of Neuro Karaoke.
+ *
+ * Neuro Karaoke is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, version 3.
+ *
+ * Neuro Karaoke is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * Neuro Karaoke. If not, see <https://www.gnu.org/licenses/>.
+ *
+ * This file is part of the Neurolings feature, ported from Shimeji-ee
+ * (© Kilkakon; original Shimeji © Group Finity), also licensed under GPL-3.0.
+ */
+
 package com.soul.neurokaraoke.ui.tv.neurolings
 
 import android.content.res.AssetManager
