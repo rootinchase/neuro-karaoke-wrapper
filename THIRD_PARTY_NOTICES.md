@@ -29,18 +29,56 @@ incorporated into the project and their licenses.
     configuration by **qingchenyou (@轻尘呦)**
 - **Note:** Redistributed here under the same GPL-3.0 terms.
 
-### Shimeji-ee (animation engine)
+Because the NeurolingsCE mascot packs above are GPL-3.0 and are combined into this
+application, the combined work is licensed under GPL-3.0.
+
+---
+
+## Shimeji-ee — animation engine (permissive, BSD/zlib-style)
+
 - **What:** The Kotlin Neurolings animation engine in
   `Android/app/src/main/java/com/soul/neurokaraoke/ui/tv/neurolings/` is a **port
-  of the Shimeji-ee desktop-pet engine** (XML action/behavior model, the `${…}`
-  expression subset, the action/behavior state machine, and the standard Shimeji
-  physics constants).
-- **Upstream:** Shimeji-ee © **Kilkakon**; based on the original **Shimeji** by
-  **Group Finity** (Yuki Yamada).
-- **License:** GNU General Public License v3.0.
+  of the Shimeji-ee desktop-pet engine** (its XML action/behavior model, the
+  `${…}` expression subset, the action/behavior state machine, and the standard
+  Shimeji physics constants).
+- **Upstream:** Shimeji-ee, maintained by **Kilkakon**; based on the original
+  **Shimeji** by **Yuki Yamada** (Group Finity), with later contributions in the
+  shimeji4mac lineage.
+- **License:** a permissive **BSD / zlib-style** license — **not GPL**. It is
+  GPL-compatible, so the port ships as part of this GPL-3.0 app while the original
+  notice and attribution below are preserved, as that license requires.
+- **Attribution required:** credit Kilkakon and the original authors; do not
+  misrepresent the origin of the software. A link to <https://kilkakon.com> is
+  appreciated. Project home: <https://kilkakon.com/shimeji/>.
 
-Because the above are GPL-3.0 and are combined into this application, the
-combined work is licensed under GPL-3.0.
+Original license text, as published in the Shimeji-ee lineage:
+
+```
+Copyright (c) 2009-2011 Yuki Yamada, 2011-2012 Yusaku Hashimoto, 2016 AlanJager
+
+This software is provided 'as-is', without any express or implied warranty. In no
+event will the authors be held liable for any damages arising from the use of this
+software.
+
+Permission is granted to anyone to use this software for any purpose, including
+commercial applications, and to alter it and redistribute it freely, subject to
+the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not claim that
+   you wrote the original software. If you use this software in a product, an
+   acknowledgment in the product documentation would be appreciated but is not
+   required.
+
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source distribution.
+
+Kilkakon (Shimeji-ee): You are welcome to use this work in your own projects if
+you credit Kilkakon and the original people who worked on this. A link to
+kilkakon.com would also be nice. Incorporates work from TigerHix
+(https://github.com/TigerHix/shimeji-universal).
+```
 
 ---
 

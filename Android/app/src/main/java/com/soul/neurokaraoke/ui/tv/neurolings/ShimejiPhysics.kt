@@ -14,8 +14,9 @@
  * You should have received a copy of the GNU General Public License along with
  * Neuro Karaoke. If not, see <https://www.gnu.org/licenses/>.
  *
- * This file is part of the Neurolings feature, ported from Shimeji-ee
- * (© Kilkakon; original Shimeji © Group Finity), also licensed under GPL-3.0.
+ * This file is part of the Neurolings feature, ported from Shimeji-ee (maintained
+ * by Kilkakon; original Shimeji by Yuki Yamada / Group Finity), which is under a
+ * permissive BSD/zlib-style license. See THIRD_PARTY_NOTICES.md.
  */
 
 package com.soul.neurokaraoke.ui.tv.neurolings

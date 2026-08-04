@@ -342,7 +342,7 @@ private fun CreditsContent() {
             )
             Spacer(modifier = Modifier.height(12.dp))
             CheckPoint(text = "Neurolings mascot packs — from NeurolingsCE by Luda, licensed under the GNU GPL v3.0")
-            CheckPoint(text = "Neurolings animation engine — ported from Shimeji-ee (© Kilkakon; original Shimeji © Group Finity), licensed under the GNU GPL v3.0")
+            CheckPoint(text = "Neurolings animation engine — ported from Shimeji-ee (by Kilkakon; original Shimeji by Yuki Yamada), used under its permissive BSD/zlib-style license")
         }
 
         // View Full Credits Link
