@@ -17,12 +17,11 @@ incorporated into the project and their licenses.
 - **License:** GNU General Public License v3.0.
 - **Project references:**
   - Neurolings project: https://neurofumo.itch.io/neurolings
-  - NeurolingsCE source repository: _pending — to be filled in with the canonical
-    URL provided by the maintainer (Luda)._
+  - NeurolingsCE source repository: https://github.com/qingchenyouforcc/NeurolingsCE
 - **Per-pack credits** (each pack also ships its original `info.json` credits,
   bundled unmodified):
-  - `Neuron`, `Weuron`, `Eviling` — art by **Paccha** (https://linktr.ee/paccha_);
-    configuration by **@promote.** (https://z.ne1.co, https://neuro.us.to) and **@dalekcraft**
+  - `Neuron`, `Weuron`, `Eviling` — art by **Paccha** (https://pacchacomms.carrd.co/);
+    configuration by **@promote.** and **@dalekcraft**
   - `Tuteling`, `Vedaling` — art by **Moneka** (https://linktr.ee/monikaphobia);
     configuration by **@promote.** and **@dalekcraft**
   - `Cerber` — art by **AnoWan, 于陌Wan, 六水Wan, 加斯科涅Wan, 士灰Wan** (bilibili);
