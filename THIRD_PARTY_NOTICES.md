@@ -12,10 +12,22 @@ incorporated into the project and their licenses.
 - **What:** The "Neurolings" desktop-pet mascot packs bundled under
   `Android/app/src/main/assets/mascots/` — `Cerber`, `Eviling`, `Neuron`,
   `Tuteling`, `Vedaling`, `Weuron` (sprite frames + `actions.xml` / `behaviors.xml`).
-- **Source project:** NeurolingsCE, by **Luda**.
+- **Source project:** NeurolingsCE ("Custom Edition"), maintained by **Luda** — a
+  Neuro-themed edition in the Neurolings / Shimeji lineage.
 - **License:** GNU General Public License v3.0.
-- **Note:** Used with the project's own behavior/action data. Redistributed here
-  under the same GPL-3.0 terms.
+- **Project references:**
+  - Neurolings project: https://neurofumo.itch.io/neurolings
+  - NeurolingsCE source repository: _pending — to be filled in with the canonical
+    URL provided by the maintainer (Luda)._
+- **Per-pack credits** (each pack also ships its original `info.json` credits,
+  bundled unmodified):
+  - `Neuron`, `Weuron`, `Eviling` — art by **Paccha** (https://linktr.ee/paccha_);
+    configuration by **@promote.** (https://z.ne1.co, https://neuro.us.to) and **@dalekcraft**
+  - `Tuteling`, `Vedaling` — art by **Moneka** (https://linktr.ee/monikaphobia);
+    configuration by **@promote.** and **@dalekcraft**
+  - `Cerber` — art by **AnoWan, 于陌Wan, 六水Wan, 加斯科涅Wan, 士灰Wan** (bilibili);
+    configuration by **qingchenyou (@轻尘呦)**
+- **Note:** Redistributed here under the same GPL-3.0 terms.
 
 ### Shimeji-ee (animation engine)
 - **What:** The Kotlin Neurolings animation engine in
