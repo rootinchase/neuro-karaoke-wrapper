@@ -25,6 +25,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.soul.neurokaraoke.data.repository.LocaleManager
+import com.soul.neurokaraoke.service.GlobalMediaToken
 import com.soul.neurokaraoke.service.MediaPlaybackService
 import com.soul.neurokaraoke.ui.theme.NeuroKaraokeTheme
 
@@ -64,6 +65,7 @@ class AaosLauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleAuthIntent(intent)
+        handleMediaIntent(intent)
 
         // Connect to MediaPlaybackService so playback flows through the
         // same service the phone uses — notifications, audio focus, the works.
@@ -86,10 +88,13 @@ class AaosLauncherActivity : ComponentActivity() {
                     ) {
                         val vm: AaosViewModel = viewModel()
                         LaunchedEffect(Unit) { vm.bootstrap(applicationContext) }
+                        
                         // Discord deep-link path no longer used (pairing code replaces it).
                         AaosApp(
                             viewModel = vm,
-                            controllerProvider = { controller }
+                            controllerProvider = { controller },
+                            navOverride = requestedRoute.value,
+                            onNavOverrideHandled = { requestedRoute.value = null }
                         )
                     }
                 }

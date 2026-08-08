@@ -60,7 +60,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private var setlists: List<Playlist> = emptyList()
     private var loadJob: Job? = null
     private var initialLoaded = false
-    private var activeTab: String = TAB_RADIO
+    private var activeTab: String = TAB_PLAYLISTS
     private var librarySingerFilter: Singer? = null
 
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -143,10 +143,9 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         builder.addTab(tab(TAB_MORE, res.getString(R.string.car_tab_more), R.drawable.ic_car_persona))
 
         val content = when (activeTab) {
-            TAB_PLAYLISTS -> playlistsContent()
             TAB_RADIO -> radioContent()
             TAB_MORE -> moreContent()
-            else -> libraryContent()
+            else -> playlistsContent()
         }
         builder.setTabContents(TabContents.Builder(content).build())
         return builder.build()
@@ -193,7 +192,8 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
         filteredSongs.take(limit).forEachIndexed { idx, song ->
             items.addItem(songTile(song) { 
-                carPlayer.playSongs(filteredSongs, idx, res.getString(R.string.car_title_library)) 
+                carPlayer.playSongs(filteredSongs, idx, res.getString(R.string.car_title_library))
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
             })
         }
 
@@ -325,7 +325,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                     IconCompat.createWithResource(carContext, android.R.drawable.ic_media_play)
                 ).build()
             )
-            .setOnClickListener { carPlayer.playRadio() }
+            .setOnClickListener { 
+                carPlayer.playRadio() 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            }
             .build()
 
         val pane = Pane.Builder()

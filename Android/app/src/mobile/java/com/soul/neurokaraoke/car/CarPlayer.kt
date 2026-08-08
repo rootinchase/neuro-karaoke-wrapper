@@ -104,7 +104,7 @@ class CarPlayer(private val context: Context) {
         connecting = null
     }
 
-    private fun runOnController(block: (MediaController) -> Unit) {
+    fun runOnController(block: (MediaController) -> Unit) {
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
             val c = controller
             if (c != null) {

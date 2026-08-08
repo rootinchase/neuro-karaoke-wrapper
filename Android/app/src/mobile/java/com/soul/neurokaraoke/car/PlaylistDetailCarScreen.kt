@@ -112,6 +112,7 @@ class PlaylistDetailCarScreen(
                 .setOnClickListener {
                     val shuffled = displayed.shuffled()
                     carPlayer.playSongs(shuffled, 0, playlist.title)
+                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
                 }
                 .build()
         )
@@ -126,7 +127,10 @@ class PlaylistDetailCarScreen(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song))
                     .build()
             )
-            .setOnClickListener { carPlayer.playSongs(displayed, 0, playlist.title) }
+            .setOnClickListener { 
+                carPlayer.playSongs(displayed, 0, playlist.title) 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            }
             .build()
 
         return ListTemplate.Builder()
@@ -145,7 +149,10 @@ class PlaylistDetailCarScreen(
         val builder = Row.Builder()
             .setTitle("${index + 1}. ${song.title}")
             .addText("${song.artist} • ${song.coverArtist}")
-            .setOnClickListener { carPlayer.playSongs(list, index, playlist.title) }
+            .setOnClickListener { 
+                carPlayer.playSongs(list, index, playlist.title) 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            }
 
         val bmp = coverCache.get(song.coverUrl)
         val icon = if (bmp != null) {
