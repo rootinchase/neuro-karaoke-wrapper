@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
+import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -205,6 +206,16 @@ class MediaPlaybackService : MediaLibraryService() {
                 .setSessionActivity(sessionActivityPendingIntent)
                 .setBitmapLoader(CacheBitmapLoader(androidx.media3.datasource.DataSourceBitmapLoader(this)))
                 .build()
+
+            // Safe reflection to get legacy token for Car App Library registration
+            try {
+                val field = librarySession?.javaClass?.superclass?.getDeclaredField("sessionCompat")
+                field?.isAccessible = true
+                val sessionCompat = field?.get(librarySession) as? MediaSessionCompat
+                GlobalMediaToken.token = sessionCompat?.sessionToken
+            } catch (e: Exception) {
+                Log.e("MediaPlaybackService", "Failed to get sessionCompat via reflection", e)
+            }
         }
     }
 

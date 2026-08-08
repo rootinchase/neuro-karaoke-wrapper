@@ -64,7 +64,11 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private var librarySingerFilter: Singer? = null
 
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-    fun invalidateOnMain() = mainHandler.post { invalidate() }
+    private val invalidateRunnable = Runnable { invalidate() }
+    fun invalidateOnMain() {
+        mainHandler.removeCallbacks(invalidateRunnable)
+        mainHandler.postDelayed(invalidateRunnable, 100)
+    }
 
     init {
         carPlayer.ensureConnected()
@@ -81,11 +85,29 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             setlists = catalog.getPlaylists()
             
             initialLoaded = true
-            // Prefetch first batch of covers
-            coverCache.prefetch(
-                allSongs.take(40).map { it.coverUrl } +
-                    setlists.take(20).flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
-            ) { invalidateOnMain() }
+            // Prefetch covers
+            val userCovers = userRepo.playlists.value.flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+            val setlistCovers = setlists.take(20).flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+            val songCovers = allSongs.take(40).map { it.coverUrl }
+            
+            coverCache.prefetch(songCovers + userCovers + setlistCovers) { 
+                invalidateOnMain() 
+            }
+
+            // Also observe user playlist and favorites updates to prefetch new covers
+            scope.launch {
+                userRepo.playlists.collect { updatedPlaylists ->
+                    val newCovers = updatedPlaylists.flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+                    coverCache.prefetch(newCovers) { invalidateOnMain() }
+                }
+            }
+            scope.launch {
+                favoritesRepo.favorites.collect { favorites ->
+                    val newCovers = favorites.take(1).map { it.coverUrl }
+                    coverCache.prefetch(newCovers) { invalidateOnMain() }
+                }
+            }
+
             withContext(Dispatchers.Main) { invalidate() }
         }
         lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
@@ -104,6 +126,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private fun tabTemplate(): Template {
         val builder = TabTemplate.Builder(object : TabTemplate.TabCallback {
             override fun onTabSelected(tabContentId: String) {
+                if (tabContentId == TAB_NOW_PLAYING) {
+                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    return
+                }
                 activeTab = tabContentId
                 invalidate()
             }
@@ -166,10 +192,20 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         }
 
         filteredSongs.take(limit).forEachIndexed { idx, song ->
-            items.addItem(songTile(song) { carPlayer.playSongs(filteredSongs, idx) })
+            items.addItem(songTile(song) { 
+                carPlayer.playSongs(filteredSongs, idx, res.getString(R.string.car_title_library)) 
+            })
         }
 
         val actionStrip = ActionStrip.Builder()
+            .addAction(
+                Action.Builder()
+                    .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song)).build())
+                    .setOnClickListener {
+                        screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    }
+                    .build()
+            )
             .addAction(
                 Action.Builder()
                     .setTitle(getSingerLabel(librarySingerFilter))
@@ -239,6 +275,8 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
         // Add Favorites at the top if not empty
         val favorites = favoritesRepo.favorites.value
+        val listLimit = if (favorites.isNotEmpty()) limit - 1 else limit
+        
         if (favorites.isNotEmpty()) {
             val favTitle = res.getString(R.string.aaos_label_favorites)
             val favItem = GridItem.Builder()
@@ -251,7 +289,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             items.addItem(favItem.build())
         }
 
-        combined.take(limit).forEach { pl ->
+        combined.take(listLimit).forEach { pl ->
             items.addItem(playlistTile(pl))
         }
 
@@ -301,6 +339,19 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun moreContent(): Template {
         val items = ItemList.Builder()
+
+        items.addItem(
+            Row.Builder()
+                .setTitle("Now Playing")
+                .setImage(
+                    CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song)).build(),
+                    Row.IMAGE_TYPE_ICON
+                )
+                .setOnClickListener {
+                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                }
+                .build()
+        )
 
         items.addItem(
             Row.Builder()
@@ -493,13 +544,13 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                 IconCompat.createWithResource(carContext, R.drawable.ic_car_song)
             ).build()
         }
-        val type = if (bmp != null) GridItem.IMAGE_TYPE_LARGE else GridItem.IMAGE_TYPE_ICON
-        builder.setImage(icon, type)
+        builder.setImage(icon, GridItem.IMAGE_TYPE_LARGE)
     }
 
     private fun gridLimit(): Int = try {
         carContext.getCarService(ConstraintManager::class.java)
             .getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
+            .coerceAtMost(48)
     } catch (_: Throwable) {
         24
     }
@@ -508,6 +559,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         const val TAB_LIBRARY = "library"
         const val TAB_PLAYLISTS = "playlists"
         const val TAB_RADIO = "radio"
+        const val TAB_NOW_PLAYING = "now_playing"
         const val TAB_MORE = "more"
     }
 }

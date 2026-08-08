@@ -49,7 +49,12 @@ class AaosLauncherActivity : ComponentActivity() {
 
     private fun handleAuthIntent(intent: Intent?) {
         val data = intent?.data ?: return
-        if (data.scheme == "neurokaraoke" && data.host == "auth") {
+        val isAuthCallback = when {
+            data.scheme == "neurokaraoke" && data.host == "auth" -> true
+            data.scheme == "https" && data.host == "neurokaraoke.com" && data.path == "/app-auth" -> true
+            else -> false
+        }
+        if (isAuthCallback) {
             val code = data.getQueryParameter("code") ?: return
             pendingAuthCode.value = code
         }

@@ -1,11 +1,14 @@
 package com.soul.neurokaraoke.car
 
 import android.content.Intent
+import android.support.v4.media.session.MediaSessionCompat
 import androidx.car.app.Screen
 import androidx.car.app.Session
+import androidx.car.app.media.MediaPlaybackManager
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.soul.neurokaraoke.data.repository.LocaleManager
+import com.soul.neurokaraoke.service.GlobalMediaToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -18,9 +21,19 @@ class NeuroKaraokeCarSession : Session() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var homeScreen: HomeCarScreen? = null
 
+    @androidx.annotation.OptIn(androidx.car.app.annotations.ExperimentalCarApi::class)
     override fun onCreateScreen(intent: Intent): Screen {
         val screen = HomeCarScreen(carContext)
         homeScreen = screen
+
+        // Register the media session token with Car App Library.
+        // This is required for MediaPlaybackTemplate (Now Playing screen) to work.
+        GlobalMediaToken.token?.let { token ->
+            try {
+                val playbackManager = carContext.getCarService(MediaPlaybackManager::class.java)
+                playbackManager.registerMediaPlaybackToken(token)
+            } catch (_: Exception) {}
+        }
 
         // Observe locale changes and invalidate car templates so
         // getString() calls re-resolve to the new language.
