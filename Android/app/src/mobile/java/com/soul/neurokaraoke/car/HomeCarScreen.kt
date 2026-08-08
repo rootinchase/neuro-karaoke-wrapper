@@ -137,9 +137,9 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         builder.setHeaderAction(Action.APP_ICON)
         builder.setActiveTabContentId(activeTab)
 
-        builder.addTab(tab(TAB_RADIO, res.getString(R.string.car_tab_radio), R.drawable.ic_car_radio))
-        builder.addTab(tab(TAB_LIBRARY, res.getString(R.string.car_tab_library), R.drawable.ic_car_library))
+        builder.addTab(tab(TAB_NOW_PLAYING, res.getString(R.string.player_title_now_playing), R.drawable.ic_car_song))
         builder.addTab(tab(TAB_PLAYLISTS, res.getString(R.string.car_tab_playlists), R.drawable.ic_car_browse))
+        builder.addTab(tab(TAB_RADIO, res.getString(R.string.car_tab_radio), R.drawable.ic_car_radio))
         builder.addTab(tab(TAB_MORE, res.getString(R.string.car_tab_more), R.drawable.ic_car_persona))
 
         val content = when (activeTab) {
@@ -165,12 +165,12 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
     // ---- Library: grid of recently-added songs --------------------------------
 
-    private fun libraryContent(): Template {
+    private fun libraryContent(headerAction: Action = Action.APP_ICON): Template {
         if (!initialLoaded) {
             return GridTemplate.Builder()
                 .setTitle(res.getString(R.string.car_title_library))
                 .setLoading(true)
-                .setHeaderAction(Action.APP_ICON)
+                .setHeaderAction(headerAction)
                 .build()
         }
         if (allSongs.isEmpty()) {
@@ -179,7 +179,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                 .setSingleList(
                     ItemList.Builder().setNoItemsMessage(res.getString(R.string.car_empty_no_songs)).build()
                 )
-                .setHeaderAction(Action.APP_ICON)
+                .setHeaderAction(headerAction)
                 .build()
         }
         val limit = gridLimit()
@@ -217,7 +217,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         return GridTemplate.Builder()
             .setTitle(res.getString(R.string.car_title_library))
             .setSingleList(items.build())
-            .setHeaderAction(Action.APP_ICON)
+            .setHeaderAction(headerAction)
             .setActionStrip(actionStrip)
             .build()
     }
@@ -229,6 +229,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             Singer.DUET -> "Duets"
             else -> "All"
         }
+    }
+
+    private inner class LibraryCarScreen(carContext: CarContext) : Screen(carContext) {
+        override fun onGetTemplate(): Template = libraryContent(Action.BACK)
     }
 
     private fun showFilterPicker() {
@@ -342,13 +346,13 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
         items.addItem(
             Row.Builder()
-                .setTitle("Now Playing")
+                .setTitle(res.getString(R.string.car_title_library))
                 .setImage(
-                    CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song)).build(),
+                    CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_library)).build(),
                     Row.IMAGE_TYPE_ICON
                 )
                 .setOnClickListener {
-                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    screenManager.push(LibraryCarScreen(carContext))
                 }
                 .build()
         )
